@@ -1,6 +1,8 @@
 import React, {useState} from 'react';
 import {
   FiBarChart2,
+  FiBell,
+  FiChevronDown,
   FiChevronRight,
   FiCreditCard,
   FiFileText,
@@ -8,11 +10,13 @@ import {
   FiRadio,
   FiSettings,
   FiShield,
+  FiUser,
   FiUsers
 } from 'react-icons/fi';
 
 const AdminSidebar = () => {
   const [selectedMenu, setSelectedMenu] = useState('강연방송 관리');
+  const [expandedMenus, setExpandedMenus] = useState({});
 
   const menuItems = [
     {icon: FiBarChart2, label: '구독', hasSubmenu: true},
@@ -22,11 +26,34 @@ const AdminSidebar = () => {
     {icon: FiFileText, label: '투자관리', hasSubmenu: true},
     {icon: FiRadio, label: '전문가 수익률', hasSubmenu: true},
     {icon: FiSettings, label: '강연방송 관리', hasSubmenu: true, active: true},
-    {icon: FiGlobe, label: '홈페이지 관리', hasSubmenu: true}
+    {
+      icon: FiGlobe,
+      label: '홈페이지 관리',
+      hasSubmenu: true,
+      submenus: [
+        {icon: FiUser, label: '전문가 페이지 관리'},
+        {icon: FiBell, label: '공지사항 관리'}
+      ]
+    }
   ];
 
-  const MenuItem = ({icon: Icon, label, hasSubmenu, active, onClick}) => {
+  const toggleSubmenu = (label) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [label]: !prev[label]
+    }));
+  };
+
+  const MenuItem = ({
+    icon: Icon,
+    label,
+    hasSubmenu,
+    active,
+    onClick,
+    submenus = []
+  }) => {
     const [isHovered, setIsHovered] = useState(false);
+    const isExpanded = expandedMenus[label];
 
     const menuItemStyle = {
       display: 'flex',
@@ -41,22 +68,79 @@ const AdminSidebar = () => {
       borderLeft: active ? '3px solid white' : '3px solid transparent'
     };
 
+    const submenuStyle = {
+      backgroundColor: 'rgba(0,0,0,0.1)',
+      paddingLeft: '20px',
+      overflow: 'hidden',
+      transition: 'max-height 0.3s ease-out',
+      maxHeight: isExpanded ? '200px' : '0px'
+    };
+
+    const submenuItemStyle = {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      padding: '12px 16px',
+      cursor: 'pointer',
+      transition: 'background-color 0.2s',
+      color: 'rgba(255,255,255,0.9)',
+      fontSize: '13px',
+      fontWeight: '400'
+    };
+
     return (
-        <div
-            style={menuItemStyle}
-            onClick={onClick}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-        >
-          <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-            <Icon size={16}/>
-            <span style={{
-              fontSize: '13px',
-              fontWeight: '500',
-              letterSpacing: '-0.01em'
-            }}>{label}</span>
+        <div>
+          <div
+              style={menuItemStyle}
+              onClick={() => {
+                if (submenus.length > 0) {
+                  toggleSubmenu(label);
+                } else {
+                  onClick();
+                }
+              }}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+          >
+            <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+              <Icon size={16}/>
+              <span style={{
+                fontSize: '13px',
+                fontWeight: '500',
+                letterSpacing: '-0.01em'
+              }}>{label}</span>
+            </div>
+            {hasSubmenu && (
+                submenus.length > 0 ? (
+                    isExpanded ? <FiChevronDown size={14}/> : <FiChevronRight
+                        size={14}/>
+                ) : (
+                    <FiChevronRight size={14}/>
+                )
+            )}
           </div>
-          {hasSubmenu && <FiChevronRight size={14}/>}
+
+          {/* 서브메뉴 */}
+          {submenus.length > 0 && (
+              <div style={submenuStyle}>
+                {submenus.map((submenu, index) => (
+                    <div
+                        key={index}
+                        style={submenuItemStyle}
+                        onClick={() => setSelectedMenu(submenu.label)}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = 'transparent';
+                        }}
+                    >
+                      <submenu.icon size={14}/>
+                      <span>{submenu.label}</span>
+                    </div>
+                ))}
+              </div>
+          )}
         </div>
     );
   };
@@ -108,7 +192,7 @@ const AdminSidebar = () => {
           </div>
 
           {/* Menu Items */}
-          <nav style={{flex: 1, paddingTop: '8px'}}>
+          <nav style={{flex: 1, paddingTop: '8px', overflowY: 'auto'}}>
             {menuItems.map((item, index) => (
                 <MenuItem
                     key={index}
@@ -117,6 +201,7 @@ const AdminSidebar = () => {
                     hasSubmenu={item.hasSubmenu}
                     active={item.active}
                     onClick={() => setSelectedMenu(item.label)}
+                    submenus={item.submenus || []}
                 />
             ))}
           </nav>
@@ -133,7 +218,7 @@ const AdminSidebar = () => {
           </div>
         </div>
 
-        {/* Main Content Area (빈 공간) */}
+        {/* Main Content Area */}
         <div style={{
           flex: 1,
           backgroundColor: '#f9fafb',
@@ -146,7 +231,8 @@ const AdminSidebar = () => {
             backgroundColor: 'white',
             borderRadius: '8px',
             boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            textAlign: 'center'
+            textAlign: 'center',
+            maxWidth: '500px'
           }}>
             <h2 style={{
               color: '#374151',
@@ -161,9 +247,16 @@ const AdminSidebar = () => {
               color: '#6b7280',
               fontSize: '14px',
               fontWeight: '400',
-              letterSpacing: '-0.01em'
+              letterSpacing: '-0.01em',
+              lineHeight: '1.5'
             }}>
               여기에 해당 메뉴의 콘텐츠가 표시됩니다.
+              {selectedMenu === '전문가 페이지 관리' && (
+                  <><br/><br/>전문가 프로필, 경력, 수익률 등을 관리할 수 있습니다.</>
+              )}
+              {selectedMenu === '공지사항 관리' && (
+                  <><br/><br/>사이트 공지사항을 작성, 수정, 삭제할 수 있습니다.</>
+              )}
             </p>
           </div>
         </div>

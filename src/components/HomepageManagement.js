@@ -1,7 +1,9 @@
 import React, {useState} from 'react';
 import {
   FiBarChart2,
+  FiBell,
   FiCalendar,
+  FiChevronDown,
   FiChevronRight,
   FiCreditCard,
   FiEdit3,
@@ -20,12 +22,13 @@ import {
 } from 'react-icons/fi';
 
 const HomepageManagement = () => {
-  const [selectedMenu, setSelectedMenu] = useState('홈페이지 관리');
+  const [selectedMenu, setSelectedMenu] = useState('공지사항 관리');
   const [selectedNotice, setSelectedNotice] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedExperts, setSelectedExperts] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState({'홈페이지 관리': true});
   const [editForm, setEditForm] = useState({
     title: '',
     metaDescription: '',
@@ -154,9 +157,21 @@ const HomepageManagement = () => {
       icon: FiGlobe,
       label: '홈페이지 관리',
       hasSubmenu: true,
-      active: selectedMenu === '홈페이지 관리'
+      active: selectedMenu === '홈페이지 관리' || selectedMenu === '전문가 페이지 관리'
+          || selectedMenu === '공지사항 관리',
+      submenus: [
+        {icon: FiUser, label: '전문가 페이지 관리'},
+        {icon: FiBell, label: '공지사항 관리'}
+      ]
     }
   ];
+
+  const toggleSubmenu = (label) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [label]: !prev[label]
+    }));
+  };
 
   const filteredNotices = notices.filter(notice => {
     const matchesSearch = notice.title.toLowerCase().includes(
@@ -201,7 +216,6 @@ const HomepageManagement = () => {
   };
 
   const handleSave = () => {
-    // 실제로는 API 호출하여 저장
     console.log('저장된 메타 데이터:', editForm);
     setIsEditing(false);
   };
@@ -216,8 +230,16 @@ const HomepageManagement = () => {
     }
   };
 
-  const MenuItem = ({icon: Icon, label, hasSubmenu, active, onClick}) => {
+  const MenuItem = ({
+    icon: Icon,
+    label,
+    hasSubmenu,
+    active,
+    onClick,
+    submenus = []
+  }) => {
     const [isHovered, setIsHovered] = useState(false);
+    const isExpanded = expandedMenus[label];
 
     const menuItemStyle = {
       display: 'flex',
@@ -232,22 +254,87 @@ const HomepageManagement = () => {
       borderLeft: active ? '3px solid white' : '3px solid transparent'
     };
 
+    const submenuStyle = {
+      backgroundColor: 'rgba(0,0,0,0.1)',
+      paddingLeft: '20px',
+      overflow: 'hidden',
+      transition: 'max-height 0.3s ease-out',
+      maxHeight: isExpanded ? '200px' : '0px'
+    };
+
+    const submenuItemStyle = {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      padding: '12px 16px',
+      cursor: 'pointer',
+      transition: 'background-color 0.2s',
+      color: 'rgba(255,255,255,0.9)',
+      fontSize: '13px',
+      fontWeight: '400'
+    };
+
     return (
-        <div
-            style={menuItemStyle}
-            onClick={onClick}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-        >
-          <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-            <Icon size={16}/>
-            <span style={{
-              fontSize: '13px',
-              fontWeight: '500',
-              letterSpacing: '-0.01em'
-            }}>{label}</span>
+        <div>
+          <div
+              style={menuItemStyle}
+              onClick={() => {
+                if (submenus.length > 0) {
+                  toggleSubmenu(label);
+                } else {
+                  onClick();
+                }
+              }}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+          >
+            <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+              <Icon size={16}/>
+              <span style={{
+                fontSize: '13px',
+                fontWeight: '500',
+                letterSpacing: '-0.01em'
+              }}>{label}</span>
+            </div>
+            {hasSubmenu && (
+                submenus.length > 0 ? (
+                    isExpanded ? <FiChevronDown size={14}/> : <FiChevronRight
+                        size={14}/>
+                ) : (
+                    <FiChevronRight size={14}/>
+                )
+            )}
           </div>
-          {hasSubmenu && <FiChevronRight size={14}/>}
+
+          {/* 서브메뉴 */}
+          {submenus.length > 0 && (
+              <div style={submenuStyle}>
+                {submenus.map((submenu, index) => (
+                    <div
+                        key={index}
+                        style={{
+                          ...submenuItemStyle,
+                          backgroundColor: selectedMenu === submenu.label
+                              ? 'rgba(255,255,255,0.2)' : 'transparent'
+                        }}
+                        onClick={() => setSelectedMenu(submenu.label)}
+                        onMouseEnter={(e) => {
+                          if (selectedMenu !== submenu.label) {
+                            e.target.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedMenu !== submenu.label) {
+                            e.target.style.backgroundColor = 'transparent';
+                          }
+                        }}
+                    >
+                      <submenu.icon size={14}/>
+                      <span>{submenu.label}</span>
+                    </div>
+                ))}
+              </div>
+          )}
         </div>
     );
   };
@@ -276,6 +363,686 @@ const HomepageManagement = () => {
         />
       </div>
   );
+
+  const getPageTitle = () => {
+    switch (selectedMenu) {
+      case '전문가 페이지 관리':
+        return '전문가 페이지 관리';
+      case '공지사항 관리':
+        return '공지사항 관리';
+      default:
+        return '홈페이지 관리';
+    }
+  };
+
+  const renderMainContent = () => {
+    if (selectedMenu === '전문가 페이지 관리') {
+      return (
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '40px'
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              padding: '60px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              border: '1px solid #e2e8f0',
+              textAlign: 'center',
+              maxWidth: '600px'
+            }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                backgroundColor: '#f0f9ff',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 24px auto'
+              }}>
+                <FiUser size={32} style={{color: '#0ea5e9'}}/>
+              </div>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: '600',
+                color: '#374151',
+                margin: '0 0 16px 0'
+              }}>
+                전문가 페이지 관리
+              </h2>
+              <p style={{
+                fontSize: '16px',
+                color: '#64748b',
+                margin: 0,
+                lineHeight: '1.6'
+              }}>
+                전문가 프로필, 경력, 수익률 등을 관리할 수 있는<br/>
+                페이지가 곧 추가될 예정입니다.
+              </p>
+            </div>
+          </div>
+      );
+    }
+
+    // 공지사항 관리 페이지 (기존 코드)
+    return (
+        <div style={{flex: 1, display: 'flex', gap: '24px', padding: '24px'}}>
+          {/* Left Panel - Notice List */}
+          <div style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
+            {/* Search and Filters */}
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              marginBottom: '20px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              border: '1px solid #e2e8f0'
+            }}>
+              {/* Search Bar */}
+              <div style={{position: 'relative', marginBottom: '20px'}}>
+                <FiSearch style={{
+                  position: 'absolute',
+                  left: '16px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#94a3b8',
+                  fontSize: '18px'
+                }}/>
+                <input
+                    type="text"
+                    placeholder="제목, 메타데이터로 검색..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{
+                      width: 'calc(100% - 24px)',
+                      padding: '14px 16px 14px 48px',
+                      border: '2px solid #e2e8f0',
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      outline: 'none',
+                      transition: 'all 0.3s ease',
+                      backgroundColor: '#f8fafc',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#4F46E5';
+                      e.target.style.backgroundColor = 'white';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#e2e8f0';
+                      e.target.style.backgroundColor = '#f8fafc';
+                    }}
+                />
+              </div>
+
+              {/* Category Filters */}
+              <div style={{marginBottom: '16px'}}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '12px'
+                }}>
+                  <FiTag size={16} style={{color: '#4F46E5'}}/>
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#374151'
+                  }}>
+                  카테고리
+                </span>
+                </div>
+                <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
+                  {categories.map(category => (
+                      <button
+                          key={category}
+                          onClick={() => handleCategoryToggle(category)}
+                          style={{
+                            padding: '8px 16px',
+                            border: selectedCategories.includes(category)
+                                ? '2px solid #4F46E5'
+                                : '2px solid #e2e8f0',
+                            backgroundColor: selectedCategories.includes(
+                                category)
+                                ? '#4F46E5'
+                                : 'white',
+                            color: selectedCategories.includes(category)
+                                ? 'white'
+                                : '#374151',
+                            borderRadius: '20px',
+                            fontSize: '12px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                      >
+                        {category}
+                      </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Expert Filters */}
+              <div style={{marginBottom: '16px'}}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '12px'
+                }}>
+                  <FiUser size={16} style={{color: '#16A34A'}}/>
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#374151'
+                  }}>
+                  전문가
+                </span>
+                </div>
+                <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
+                  {experts.map(expert => (
+                      <button
+                          key={expert}
+                          onClick={() => handleExpertToggle(expert)}
+                          style={{
+                            padding: '8px 16px',
+                            border: selectedExperts.includes(expert)
+                                ? '2px solid #16A34A'
+                                : '2px solid #e2e8f0',
+                            backgroundColor: selectedExperts.includes(expert)
+                                ? '#16A34A'
+                                : 'white',
+                            color: selectedExperts.includes(expert)
+                                ? 'white'
+                                : '#374151',
+                            borderRadius: '20px',
+                            fontSize: '12px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                      >
+                        {expert}
+                      </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Active Filters */}
+              {(selectedCategories.length > 0 || selectedExperts.length > 0)
+                  && (
+                      <div style={{
+                        borderTop: '1px solid #e2e8f0',
+                        paddingTop: '16px',
+                        display: 'flex',
+                        gap: '8px',
+                        flexWrap: 'wrap'
+                      }}>
+                        {selectedCategories.map(category => (
+                            <FilterTag
+                                key={category}
+                                text={category}
+                                type="category"
+                                onRemove={() => handleCategoryToggle(category)}
+                            />
+                        ))}
+                        {selectedExperts.map(expert => (
+                            <FilterTag
+                                key={expert}
+                                text={expert}
+                                type="expert"
+                                onRemove={() => handleExpertToggle(expert)}
+                            />
+                        ))}
+                      </div>
+                  )}
+            </div>
+
+            {/* Notice List */}
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              border: '1px solid #e2e8f0',
+              flex: 1
+            }}>
+              <div style={{
+                padding: '20px 24px',
+                borderBottom: '1px solid #e2e8f0',
+                backgroundColor: '#f8fafc'
+              }}>
+                <h3 style={{
+                  margin: 0,
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#374151'
+                }}>
+                  공지사항 목록 ({filteredNotices.length})
+                </h3>
+              </div>
+
+              <div style={{maxHeight: '600px', overflowY: 'auto'}}>
+                {filteredNotices.map((notice, index) => (
+                    <div
+                        key={notice.id}
+                        onClick={() => handleNoticeSelect(notice)}
+                        style={{
+                          padding: '16px 24px',
+                          borderBottom: index < filteredNotices.length - 1
+                              ? '1px solid #f1f5f9' : 'none',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          backgroundColor: selectedNotice?.id === notice.id
+                              ? '#f0f9ff' : 'white',
+                          borderLeft: selectedNotice?.id === notice.id
+                              ? '4px solid #0ea5e9' : '4px solid transparent'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (selectedNotice?.id !== notice.id) {
+                            e.target.style.backgroundColor = '#f8fafc';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedNotice?.id !== notice.id) {
+                            e.target.style.backgroundColor = 'white';
+                          }
+                        }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        marginBottom: '12px'
+                      }}>
+                        <h4 style={{
+                          margin: 0,
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: '#1e293b',
+                          flex: 1,
+                          lineHeight: '1.4',
+                          paddingRight: '16px'
+                        }}>
+                          {notice.title}
+                        </h4>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          flexShrink: 0
+                        }}>
+                      <span style={{
+                        fontSize: '11px',
+                        color: '#64748b',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        <FiCalendar size={11}/>
+                        {notice.date}
+                      </span>
+                          {notice.views && (
+                              <span style={{
+                                fontSize: '11px',
+                                color: '#64748b'
+                              }}>
+                          조회 {notice.views.toLocaleString()}
+                        </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div style={{
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'center'
+                      }}>
+                    <span style={{
+                      padding: '3px 8px',
+                      backgroundColor: notice.category === '공지' ? '#fef3c7' :
+                          notice.category === '이벤트' ? '#dcfce7' :
+                              notice.category === '강연방송' ? '#dbeafe' :
+                                  notice.category === '아카데미' ? '#f3e8ff' :
+                                      notice.category === '신규오픈' ? '#fed7d7'
+                                          : '#f3f4f6',
+                      color: notice.category === '공지' ? '#92400e' :
+                          notice.category === '이벤트' ? '#166534' :
+                              notice.category === '강연방송' ? '#1e40af' :
+                                  notice.category === '아카데미' ? '#6b21a8' :
+                                      notice.category === '신규오픈' ? '#c53030'
+                                          : '#4a5568',
+                      borderRadius: '12px',
+                      fontSize: '10px',
+                      fontWeight: '500'
+                    }}>
+                      {notice.category}
+                    </span>
+                        {notice.expert && (
+                            <span style={{
+                              fontSize: '12px',
+                              color: '#64748b'
+                            }}>
+                        {notice.expert}
+                      </span>
+                        )}
+                      </div>
+                    </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Panel - Meta Editor */}
+          <div style={{
+            width: '400px',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {selectedNotice ? (
+                <div style={{
+                  backgroundColor: 'white',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                  border: '1px solid #e2e8f0',
+                  height: 'fit-content'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '20px'
+                  }}>
+                    <h3 style={{
+                      margin: 0,
+                      fontSize: '18px',
+                      fontWeight: '600',
+                      color: '#374151'
+                    }}>
+                      SEO 메타데이터
+                    </h3>
+                    <button
+                        onClick={() => setIsEditing(!isEditing)}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: isEditing ? '#dc2626' : '#4F46E5',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: 'all 0.3s ease'
+                        }}
+                    >
+                      <FiEdit3 size={12}/>
+                      {isEditing ? '취소' : '편집'}
+                    </button>
+                  </div>
+
+                  <div style={{marginBottom: '16px'}}>
+                    <h4 style={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#374151',
+                      marginBottom: '8px'
+                    }}>
+                      선택된 공지사항
+                    </h4>
+                    <p style={{
+                      fontSize: '13px',
+                      color: '#64748b',
+                      margin: 0,
+                      padding: '12px',
+                      backgroundColor: '#f8fafc',
+                      borderRadius: '8px',
+                      border: '1px solid #e2e8f0'
+                    }}>
+                      {selectedNotice.title}
+                    </p>
+                  </div>
+
+                  <div style={{marginBottom: '20px'}}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#374151',
+                      marginBottom: '8px'
+                    }}>
+                      Title 태그
+                    </label>
+                    {isEditing ? (
+                        <input
+                            type="text"
+                            value={editForm.title}
+                            onChange={(e) => setEditForm(
+                                {...editForm, title: e.target.value})}
+                            style={{
+                              width: 'calc(100% - 24px)',
+                              padding: '12px',
+                              border: '2px solid #e2e8f0',
+                              borderRadius: '8px',
+                              fontSize: '13px',
+                              outline: 'none',
+                              transition: 'border-color 0.3s ease',
+                              boxSizing: 'border-box'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = '#4F46E5'}
+                            onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                        />
+                    ) : (
+                        <p style={{
+                          fontSize: '13px',
+                          color: '#1e293b',
+                          margin: 0,
+                          padding: '12px',
+                          backgroundColor: '#f8fafc',
+                          borderRadius: '8px',
+                          border: '1px solid #e2e8f0'
+                        }}>
+                          {editForm.title}
+                        </p>
+                    )}
+                  </div>
+
+                  <div style={{marginBottom: '20px'}}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#374151',
+                      marginBottom: '8px'
+                    }}>
+                      Meta Description
+                    </label>
+                    {isEditing ? (
+                        <textarea
+                            value={editForm.metaDescription}
+                            onChange={(e) => setEditForm(
+                                {...editForm, metaDescription: e.target.value})}
+                            rows={3}
+                            style={{
+                              width: 'calc(100% - 24px)',
+                              padding: '12px',
+                              border: '2px solid #e2e8f0',
+                              borderRadius: '8px',
+                              fontSize: '13px',
+                              outline: 'none',
+                              resize: 'vertical',
+                              transition: 'border-color 0.3s ease',
+                              boxSizing: 'border-box'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = '#4F46E5'}
+                            onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                        />
+                    ) : (
+                        <p style={{
+                          fontSize: '13px',
+                          color: '#1e293b',
+                          margin: 0,
+                          padding: '12px',
+                          backgroundColor: '#f8fafc',
+                          borderRadius: '8px',
+                          border: '1px solid #e2e8f0',
+                          lineHeight: '1.5'
+                        }}>
+                          {editForm.metaDescription}
+                        </p>
+                    )}
+                  </div>
+
+                  <div style={{marginBottom: '24px'}}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#374151',
+                      marginBottom: '8px'
+                    }}>
+                      Keywords
+                    </label>
+                    {isEditing ? (
+                        <input
+                            type="text"
+                            value={editForm.keywords}
+                            onChange={(e) => setEditForm(
+                                {...editForm, keywords: e.target.value})}
+                            placeholder="키워드를 쉼표로 구분하여 입력하세요"
+                            style={{
+                              width: 'calc(100% - 24px)',
+                              padding: '12px',
+                              border: '2px solid #e2e8f0',
+                              borderRadius: '8px',
+                              fontSize: '13px',
+                              outline: 'none',
+                              transition: 'border-color 0.3s ease',
+                              boxSizing: 'border-box'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = '#4F46E5'}
+                            onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                        />
+                    ) : (
+                        <p style={{
+                          fontSize: '13px',
+                          color: '#1e293b',
+                          margin: 0,
+                          padding: '12px',
+                          backgroundColor: '#f8fafc',
+                          borderRadius: '8px',
+                          border: '1px solid #e2e8f0'
+                        }}>
+                          {editForm.keywords}
+                        </p>
+                    )}
+                  </div>
+
+                  {isEditing && (
+                      <div style={{display: 'flex', gap: '12px'}}>
+                        <button
+                            onClick={handleSave}
+                            style={{
+                              flex: 1,
+                              padding: '12px',
+                              backgroundColor: '#16a34a',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              transition: 'all 0.3s ease'
+                            }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = '#15803d'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = '#16a34a'}
+                        >
+                          <FiSave size={14}/>
+                          수정
+                        </button>
+                        <button
+                            onClick={handleReset}
+                            style={{
+                              flex: 1,
+                              padding: '12px',
+                              backgroundColor: '#6b7280',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              transition: 'all 0.3s ease'
+                            }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = '#4b5563'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = '#6b7280'}
+                        >
+                          <FiRotateCcw size={14}/>
+                          되돌리기
+                        </button>
+                      </div>
+                  )}
+                </div>
+            ) : (
+                <div style={{
+                  backgroundColor: 'white',
+                  borderRadius: '16px',
+                  padding: '40px',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                  border: '1px solid #e2e8f0',
+                  textAlign: 'center',
+                  height: 'fit-content'
+                }}>
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    backgroundColor: '#f0f9ff',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 20px auto'
+                  }}>
+                    <FiEdit3 size={24} style={{color: '#0ea5e9'}}/>
+                  </div>
+                  <h3 style={{
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: '#374151',
+                    margin: '0 0 8px 0'
+                  }}>
+                    공지사항을 선택하세요
+                  </h3>
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#64748b',
+                    margin: 0,
+                    lineHeight: '1.5'
+                  }}>
+                    왼쪽 목록에서 공지사항을 선택하면<br/>
+                    SEO 메타데이터를 편집할 수 있습니다.
+                  </p>
+                </div>
+            )}
+          </div>
+        </div>
+    );
+  };
 
   return (
       <div style={{
@@ -322,7 +1089,7 @@ const HomepageManagement = () => {
             }}>이토마토 ADMIN</span>
           </div>
 
-          <nav style={{flex: 1, paddingTop: '8px'}}>
+          <nav style={{flex: 1, paddingTop: '8px', overflowY: 'auto'}}>
             {menuItems.map((item, index) => (
                 <MenuItem
                     key={index}
@@ -331,6 +1098,7 @@ const HomepageManagement = () => {
                     hasSubmenu={item.hasSubmenu}
                     active={item.active}
                     onClick={() => setSelectedMenu(item.label)}
+                    submenus={item.submenus || []}
                 />
             ))}
           </nav>
@@ -354,13 +1122,13 @@ const HomepageManagement = () => {
               margin: 0,
               letterSpacing: '-0.02em'
             }}>
-              홈페이지 관리
+              {getPageTitle()}
             </h1>
             <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
-              <span style={{
-                fontSize: '14px',
-                color: '#6b7280'
-              }}>남은 시간: 54분 11초</span>
+            <span style={{
+              fontSize: '14px',
+              color: '#6b7280'
+            }}>남은 시간: 54분 11초</span>
               <div style={{
                 width: '32px',
                 height: '32px',
@@ -375,620 +1143,7 @@ const HomepageManagement = () => {
             </div>
           </div>
 
-          <div style={{flex: 1, display: 'flex', gap: '24px', padding: '24px'}}>
-            {/* Left Panel - Notice List */}
-            <div style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
-              {/* Search and Filters */}
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '16px',
-                padding: '24px',
-                marginBottom: '20px',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                border: '1px solid #e2e8f0'
-              }}>
-                {/* Search Bar */}
-                <div style={{position: 'relative', marginBottom: '20px'}}>
-                  <FiSearch style={{
-                    position: 'absolute',
-                    left: '16px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: '#94a3b8',
-                    fontSize: '18px'
-                  }}/>
-                  <input
-                      type="text"
-                      placeholder="제목, 메타데이터로 검색..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      style={{
-                        width: 'calc(100% - 24px)',
-                        padding: '14px 16px 14px 48px',
-                        border: '2px solid #e2e8f0',
-                        borderRadius: '12px',
-                        fontSize: '14px',
-                        outline: 'none',
-                        transition: 'all 0.3s ease',
-                        backgroundColor: '#f8fafc',
-                        boxSizing: 'border-box'
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = '#4F46E5';
-                        e.target.style.backgroundColor = 'white';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = '#e2e8f0';
-                        e.target.style.backgroundColor = '#f8fafc';
-                      }}
-                  />
-                </div>
-
-                {/* Category Filters */}
-                <div style={{marginBottom: '16px'}}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '12px'
-                  }}>
-                    <FiTag size={16} style={{color: '#4F46E5'}}/>
-                    <span style={{
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: '#374151'
-                    }}>
-                    카테고리
-                  </span>
-                  </div>
-                  <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
-                    {categories.map(category => (
-                        <button
-                            key={category}
-                            onClick={() => handleCategoryToggle(category)}
-                            style={{
-                              padding: '8px 16px',
-                              border: selectedCategories.includes(category)
-                                  ? '2px solid #4F46E5'
-                                  : '2px solid #e2e8f0',
-                              backgroundColor: selectedCategories.includes(
-                                  category)
-                                  ? '#4F46E5'
-                                  : 'white',
-                              color: selectedCategories.includes(category)
-                                  ? 'white'
-                                  : '#374151',
-                              borderRadius: '20px',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              cursor: 'pointer',
-                              transition: 'all 0.3s ease'
-                            }}
-                        >
-                          {category}
-                        </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Expert Filters */}
-                <div style={{marginBottom: '16px'}}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '12px'
-                  }}>
-                    <FiUser size={16} style={{color: '#16A34A'}}/>
-                    <span style={{
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: '#374151'
-                    }}>
-                    전문가
-                  </span>
-                  </div>
-                  <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
-                    {experts.map(expert => (
-                        <button
-                            key={expert}
-                            onClick={() => handleExpertToggle(expert)}
-                            style={{
-                              padding: '8px 16px',
-                              border: selectedExperts.includes(expert)
-                                  ? '2px solid #16A34A'
-                                  : '2px solid #e2e8f0',
-                              backgroundColor: selectedExperts.includes(expert)
-                                  ? '#16A34A'
-                                  : 'white',
-                              color: selectedExperts.includes(expert)
-                                  ? 'white'
-                                  : '#374151',
-                              borderRadius: '20px',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              cursor: 'pointer',
-                              transition: 'all 0.3s ease'
-                            }}
-                        >
-                          {expert}
-                        </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Active Filters */}
-                {(selectedCategories.length > 0 || selectedExperts.length > 0)
-                    && (
-                        <div style={{
-                          borderTop: '1px solid #e2e8f0',
-                          paddingTop: '16px',
-                          display: 'flex',
-                          gap: '8px',
-                          flexWrap: 'wrap'
-                        }}>
-                          {selectedCategories.map(category => (
-                              <FilterTag
-                                  key={category}
-                                  text={category}
-                                  type="category"
-                                  onRemove={() => handleCategoryToggle(
-                                      category)}
-                              />
-                          ))}
-                          {selectedExperts.map(expert => (
-                              <FilterTag
-                                  key={expert}
-                                  text={expert}
-                                  type="expert"
-                                  onRemove={() => handleExpertToggle(expert)}
-                              />
-                          ))}
-                        </div>
-                    )}
-              </div>
-
-              {/* Notice List */}
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                border: '1px solid #e2e8f0',
-                flex: 1
-              }}>
-                <div style={{
-                  padding: '20px 24px',
-                  borderBottom: '1px solid #e2e8f0',
-                  backgroundColor: '#f8fafc'
-                }}>
-                  <h3 style={{
-                    margin: 0,
-                    fontSize: '18px',
-                    fontWeight: '600',
-                    color: '#374151'
-                  }}>
-                    공지사항 목록 ({filteredNotices.length})
-                  </h3>
-                </div>
-
-                <div style={{maxHeight: '600px', overflowY: 'auto'}}>
-                  {filteredNotices.map((notice, index) => (
-                      <div
-                          key={notice.id}
-                          onClick={() => handleNoticeSelect(notice)}
-                          style={{
-                            padding: '16px 24px',
-                            borderBottom: index < filteredNotices.length - 1
-                                ? '1px solid #f1f5f9' : 'none',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                            backgroundColor: selectedNotice?.id === notice.id
-                                ? '#f0f9ff' : 'white',
-                            borderLeft: selectedNotice?.id === notice.id
-                                ? '4px solid #0ea5e9' : '4px solid transparent'
-                          }}
-                          onMouseEnter={(e) => {
-                            if (selectedNotice?.id !== notice.id) {
-                              e.target.style.backgroundColor = '#f8fafc';
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (selectedNotice?.id !== notice.id) {
-                              e.target.style.backgroundColor = 'white';
-                            }
-                          }}
-                      >
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          marginBottom: '12px'
-                        }}>
-                          <h4 style={{
-                            margin: 0,
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            color: '#1e293b',
-                            flex: 1,
-                            lineHeight: '1.4',
-                            paddingRight: '16px'
-                          }}>
-                            {notice.title}
-                          </h4>
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            flexShrink: 0
-                          }}>
-                        <span style={{
-                          fontSize: '11px',
-                          color: '#64748b',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}>
-                          <FiCalendar size={11}/>
-                          {notice.date}
-                        </span>
-                            {notice.views && (
-                                <span style={{
-                                  fontSize: '11px',
-                                  color: '#64748b'
-                                }}>
-                            조회 {notice.views.toLocaleString()}
-                          </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div style={{
-                          display: 'flex',
-                          gap: '8px',
-                          alignItems: 'center'
-                        }}>
-                      <span style={{
-                        padding: '3px 8px',
-                        backgroundColor: notice.category === '공지' ? '#fef3c7' :
-                            notice.category === '이벤트' ? '#dcfce7' :
-                                notice.category === '강연방송' ? '#dbeafe' :
-                                    notice.category === '아카데미' ? '#f3e8ff' :
-                                        notice.category === '신규오픈' ? '#fed7d7'
-                                            : '#f3f4f6',
-                        color: notice.category === '공지' ? '#92400e' :
-                            notice.category === '이벤트' ? '#166534' :
-                                notice.category === '강연방송' ? '#1e40af' :
-                                    notice.category === '아카데미' ? '#6b21a8' :
-                                        notice.category === '신규오픈' ? '#c53030'
-                                            : '#4a5568',
-                        borderRadius: '12px',
-                        fontSize: '10px',
-                        fontWeight: '500'
-                      }}>
-                        {notice.category}
-                      </span>
-                          {notice.expert && (
-                              <span style={{
-                                fontSize: '12px',
-                                color: '#64748b'
-                              }}>
-                          {notice.expert}
-                        </span>
-                          )}
-                        </div>
-                      </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Right Panel - Meta Editor */}
-            <div style={{
-              width: '400px',
-              display: 'flex',
-              flexDirection: 'column'
-            }}>
-              {selectedNotice ? (
-                  <div style={{
-                    backgroundColor: 'white',
-                    borderRadius: '16px',
-                    padding: '24px',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                    border: '1px solid #e2e8f0',
-                    height: 'fit-content'
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '20px'
-                    }}>
-                      <h3 style={{
-                        margin: 0,
-                        fontSize: '18px',
-                        fontWeight: '600',
-                        color: '#374151'
-                      }}>
-                        SEO 메타데이터
-                      </h3>
-                      <button
-                          onClick={() => setIsEditing(!isEditing)}
-                          style={{
-                            padding: '8px 16px',
-                            backgroundColor: isEditing ? '#dc2626' : '#4F46E5',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            fontWeight: '500',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            transition: 'all 0.3s ease'
-                          }}
-                      >
-                        <FiEdit3 size={12}/>
-                        {isEditing ? '취소' : '편집'}
-                      </button>
-                    </div>
-
-                    <div style={{marginBottom: '16px'}}>
-                      <h4 style={{
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: '#374151',
-                        marginBottom: '8px'
-                      }}>
-                        선택된 공지사항
-                      </h4>
-                      <p style={{
-                        fontSize: '13px',
-                        color: '#64748b',
-                        margin: 0,
-                        padding: '12px',
-                        backgroundColor: '#f8fafc',
-                        borderRadius: '8px',
-                        border: '1px solid #e2e8f0'
-                      }}>
-                        {selectedNotice.title}
-                      </p>
-                    </div>
-
-                    <div style={{marginBottom: '20px'}}>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: '#374151',
-                        marginBottom: '8px'
-                      }}>
-                        Title 태그
-                      </label>
-                      {isEditing ? (
-                          <input
-                              type="text"
-                              value={editForm.title}
-                              onChange={(e) => setEditForm(
-                                  {...editForm, title: e.target.value})}
-                              style={{
-                                width: 'calc(100% - 24px)',
-                                padding: '12px',
-                                border: '2px solid #e2e8f0',
-                                borderRadius: '8px',
-                                fontSize: '13px',
-                                outline: 'none',
-                                transition: 'border-color 0.3s ease',
-                                boxSizing: 'border-box'
-                              }}
-                              onFocus={(e) => e.target.style.borderColor = '#4F46E5'}
-                              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-                          />
-                      ) : (
-                          <p style={{
-                            fontSize: '13px',
-                            color: '#1e293b',
-                            margin: 0,
-                            padding: '12px',
-                            backgroundColor: '#f8fafc',
-                            borderRadius: '8px',
-                            border: '1px solid #e2e8f0'
-                          }}>
-                            {editForm.title}
-                          </p>
-                      )}
-                    </div>
-
-                    <div style={{marginBottom: '20px'}}>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: '#374151',
-                        marginBottom: '8px'
-                      }}>
-                        Meta Description
-                      </label>
-                      {isEditing ? (
-                          <textarea
-                              value={editForm.metaDescription}
-                              onChange={(e) => setEditForm({
-                                ...editForm,
-                                metaDescription: e.target.value
-                              })}
-                              rows={3}
-                              style={{
-                                width: 'calc(100% - 24px)',
-                                padding: '12px',
-                                border: '2px solid #e2e8f0',
-                                borderRadius: '8px',
-                                fontSize: '13px',
-                                outline: 'none',
-                                resize: 'vertical',
-                                transition: 'border-color 0.3s ease',
-                                boxSizing: 'border-box'
-                              }}
-                              onFocus={(e) => e.target.style.borderColor = '#4F46E5'}
-                              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-                          />
-                      ) : (
-                          <p style={{
-                            fontSize: '13px',
-                            color: '#1e293b',
-                            margin: 0,
-                            padding: '12px',
-                            backgroundColor: '#f8fafc',
-                            borderRadius: '8px',
-                            border: '1px solid #e2e8f0',
-                            lineHeight: '1.5'
-                          }}>
-                            {editForm.metaDescription}
-                          </p>
-                      )}
-                    </div>
-
-                    <div style={{marginBottom: '24px'}}>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: '#374151',
-                        marginBottom: '8px'
-                      }}>
-                        Keywords
-                      </label>
-                      {isEditing ? (
-                          <input
-                              type="text"
-                              value={editForm.keywords}
-                              onChange={(e) => setEditForm(
-                                  {...editForm, keywords: e.target.value})}
-                              placeholder="키워드를 쉼표로 구분하여 입력하세요"
-                              style={{
-                                width: 'calc(100% - 24px)',
-                                padding: '12px',
-                                border: '2px solid #e2e8f0',
-                                borderRadius: '8px',
-                                fontSize: '13px',
-                                outline: 'none',
-                                transition: 'border-color 0.3s ease',
-                                boxSizing: 'border-box'
-                              }}
-                              onFocus={(e) => e.target.style.borderColor = '#4F46E5'}
-                              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-                          />
-                      ) : (
-                          <p style={{
-                            fontSize: '13px',
-                            color: '#1e293b',
-                            margin: 0,
-                            padding: '12px',
-                            backgroundColor: '#f8fafc',
-                            borderRadius: '8px',
-                            border: '1px solid #e2e8f0'
-                          }}>
-                            {editForm.keywords}
-                          </p>
-                      )}
-                    </div>
-
-                    {isEditing && (
-                        <div style={{display: 'flex', gap: '12px'}}>
-                          <button
-                              onClick={handleSave}
-                              style={{
-                                flex: 1,
-                                padding: '12px',
-                                backgroundColor: '#16a34a',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '8px',
-                                fontSize: '14px',
-                                fontWeight: '500',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '8px',
-                                transition: 'all 0.3s ease'
-                              }}
-                              onMouseEnter={(e) => e.target.style.backgroundColor = '#15803d'}
-                              onMouseLeave={(e) => e.target.style.backgroundColor = '#16a34a'}
-                          >
-                            <FiSave size={14}/>
-                            수정
-                          </button>
-                          <button
-                              onClick={handleReset}
-                              style={{
-                                flex: 1,
-                                padding: '12px',
-                                backgroundColor: '#6b7280',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '8px',
-                                fontSize: '14px',
-                                fontWeight: '500',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '8px',
-                                transition: 'all 0.3s ease'
-                              }}
-                              onMouseEnter={(e) => e.target.style.backgroundColor = '#4b5563'}
-                              onMouseLeave={(e) => e.target.style.backgroundColor = '#6b7280'}
-                          >
-                            <FiRotateCcw size={14}/>
-                            되돌리기
-                          </button>
-                        </div>
-                    )}
-                  </div>
-              ) : (
-                  <div style={{
-                    backgroundColor: 'white',
-                    borderRadius: '16px',
-                    padding: '40px',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                    border: '1px solid #e2e8f0',
-                    textAlign: 'center',
-                    height: 'fit-content'
-                  }}>
-                    <div style={{
-                      width: '64px',
-                      height: '64px',
-                      backgroundColor: '#f0f9ff',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto 20px auto'
-                    }}>
-                      <FiEdit3 size={24} style={{color: '#0ea5e9'}}/>
-                    </div>
-                    <h3 style={{
-                      fontSize: '18px',
-                      fontWeight: '600',
-                      color: '#374151',
-                      margin: '0 0 8px 0'
-                    }}>
-                      공지사항을 선택하세요
-                    </h3>
-                    <p style={{
-                      fontSize: '14px',
-                      color: '#64748b',
-                      margin: 0,
-                      lineHeight: '1.5'
-                    }}>
-                      왼쪽 목록에서 공지사항을 선택하면<br/>
-                      SEO 메타데이터를 편집할 수 있습니다.
-                    </p>
-                  </div>
-              )}
-            </div>
-          </div>
+          {renderMainContent()}
         </div>
       </div>
   );
