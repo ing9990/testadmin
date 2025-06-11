@@ -28,9 +28,6 @@ const ReferralDetail = ({referral, onBack}) => {
   const event = events.find(e => e.id === referral.eventId);
   const statusStyle = getReferralStatusStyle(referral.status);
   const usagePercentage = (referral.currentUses / referral.maxUses) * 100;
-  const retainedCustomers = referral.customers.filter(c => c.retained).length;
-  const totalRevenue = referral.customers.reduce((sum, c) => sum + c.revenue,
-      0);
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(referral.code);
