@@ -2,44 +2,1326 @@
 export const events = [
   {
     id: 1,
-    name: '신상원 네이버 밴드방 추천코드 이벤트',
-    description: '신상원 전문가 네이버 밴드방 회원들을 위한 특별 할인 이벤트입니다.',
-    accessLink: 'https://band.us/@sinusangwon2025',
+    name: '5060 등산모임 밴드방 이벤트',
+    description: '5060 등산모임 밴드방 회원들을 위한 특별 할인 이벤트입니다.',
+    accessLink: 'https://band.us/@hiking5060',
     status: 'active', // active, inactive, ended
     createdAt: '2025-06-01',
     endDate: '2025-12-31',
-    totalRedeems: 8, // 5 + 2 + 1 = 실제 고객 수 합계
+    totalRedeems: 45, // 실제 고객 수 합계 (23 + 15 + 7)
     totalRevenue: 0, // 실제 계산으로 대체됨
     referralCodeCount: 3
   },
   {
     id: 2,
-    name: '이종혁 유튜브 구독자 이벤트',
-    description: '이종혁 전문가 유튜브 구독자들을 위한 프로모션 이벤트입니다.',
-    accessLink: 'https://youtube.com/@jonghyuk_invest',
+    name: '유튜브 구독자 이벤트',
+    description: '유튜브 구독자를 위한 프로모션 이벤트입니다.',
+    accessLink: 'https://youtube.com/@invest_channel',
     status: 'active',
     createdAt: '2025-05-15',
     endDate: '2025-11-30',
-    totalRedeems: 0, // 0 + 0 = 실제 고객 수 합계
+    totalRedeems: 28, // 실제 고객 수 합계 (18 + 10)
     totalRevenue: 0, // 실제 계산으로 대체됨
     referralCodeCount: 2
   },
   {
     id: 3,
-    name: '금산 카카오톡 오픈채팅 이벤트',
-    description: '금산 전문가 카카오톡 오픈채팅방 회원 대상 이벤트입니다.',
-    accessLink: 'https://open.kakao.com/o/kumsan2025',
+    name: '60대 골프모임 카카오톡 오픈채팅방 이벤트',
+    description: '60대 골프모임 카카오톡 오픈채팅방 회원 대상 이벤트입니다.',
+    accessLink: 'https://open.kakao.com/o/golf_60',
     status: 'ended',
     createdAt: '2025-04-01',
     endDate: '2025-05-31',
-    totalRedeems: 67,
+    totalRedeems: 12,
     totalRevenue: 0, // 실제 계산으로 대체됨
-    referralCodeCount: 4
+    referralCodeCount: 1
   }
 ];
 
 // 서비스 원가
 export const SERVICE_BASE_PRICE = 990000; // 99만원
+
+// 레퍼럴 코드 데이터
+export const referralCodes = [
+  {
+    id: 1,
+    eventId: 1,
+    eventName: '5060 등산모임 밴드방 이벤트',
+    code: 'BAND2025_30',
+    discountRate: 30,
+    discountType: 'percentage',
+    maxUses: 50,
+    currentUses: 23,
+    status: 'active',
+    createdAt: '2025-03-16', // 정산 기준일
+    endDate: '2025-12-31',
+    revenue: 15939000, // 23명 × 693000원
+    retentionRate: 78,
+    paybackInfo: {
+      creatorName: '김관리',
+      contactPhone: '010-1111-1111',
+      contactEmail: 'kimgwanri@example.com',
+      bankName: '국민은행',
+      accountNumber: '123-456-789012',
+      accountHolder: '김관리',
+      paybackRate: 50000,
+      totalPayback: 1000000 // 31일 유지 고객 20명 × 50000원
+    },
+    customers: [
+      // 2025-03-16 ~ 2025-04-16 기간 가입자 (첫 번째 정산 기간)
+      {
+        id: 1,
+        name: '김철수',
+        joinDate: '2025-03-20',
+        originalPrice: 990000,
+        actualRevenue: 693000, // 30% 할인 후
+        retained: true,
+        retainedDays: 145, // 가입 후 145일째 유지중 (31일 초과)
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-04-20',
+        isPaid: true
+      },
+      {
+        id: 2,
+        name: '이영희',
+        joinDate: '2025-03-25',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: true,
+        retainedDays: 140,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-04-25',
+        isPaid: true
+      },
+      {
+        id: 3,
+        name: '박민수',
+        joinDate: '2025-04-10',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: false,
+        retainedDays: 45, // 45일 유지 후 이탈 (31일 후 이탈)
+        churDate: '2025-05-25',
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-05-11',
+        isPaid: true
+      },
+      {
+        id: 4,
+        name: '정수민',
+        joinDate: '2025-04-15',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: false,
+        retainedDays: 20, // 20일만 유지 후 이탈 (31일 전 이탈)
+        churDate: '2025-05-05',
+        paybackStatus: 'churned_before_31',
+        paybackEligibleDate: '2025-05-16',
+        isPaid: false
+      },
+
+      // 2025-04-16 ~ 2025-05-16 기간 가입자 (두 번째 정산 기간)
+      {
+        id: 5,
+        name: '홍길동',
+        joinDate: '2025-04-20',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: true,
+        retainedDays: 112,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-05-21',
+        isPaid: true
+      },
+      {
+        id: 6,
+        name: '강감찬',
+        joinDate: '2025-05-01',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: true,
+        retainedDays: 101,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-06-01',
+        isPaid: true
+      },
+      {
+        id: 7,
+        name: '윤지훈',
+        joinDate: '2025-05-10',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: false,
+        retainedDays: 25, // 25일 유지 후 이탈 (31일 전 이탈)
+        churDate: '2025-06-04',
+        paybackStatus: 'churned_before_31',
+        paybackEligibleDate: '2025-06-10',
+        isPaid: false
+      },
+
+      // 2025-05-16 ~ 2025-06-16 기간 가입자 (세 번째 정산 기간)
+      {
+        id: 8,
+        name: '김영수',
+        joinDate: '2025-05-20',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: true,
+        retainedDays: 82,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-06-20',
+        isPaid: true
+      },
+      {
+        id: 9,
+        name: '최민호',
+        joinDate: '2025-06-01',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: true,
+        retainedDays: 70,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-02',
+        isPaid: true
+      },
+      {
+        id: 10,
+        name: '서동욱',
+        joinDate: '2025-06-10',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: false,
+        retainedDays: 35, // 35일 유지 후 이탈 (31일 후 이탈)
+        churDate: '2025-07-15',
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-11',
+        isPaid: true
+      },
+
+      // 2025-06-16 ~ 2025-07-16 기간 가입자 (네 번째 정산 기간)
+      {
+        id: 11,
+        name: '임재현',
+        joinDate: '2025-06-20',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: true,
+        retainedDays: 52,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-21',
+        isPaid: true
+      },
+      {
+        id: 12,
+        name: '노승현',
+        joinDate: '2025-07-01',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: true,
+        retainedDays: 41,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-08-01',
+        isPaid: true
+      },
+      {
+        id: 13,
+        name: '한민수',
+        joinDate: '2025-07-10',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: false,
+        retainedDays: 18, // 18일 유지 후 이탈 (31일 전 이탈)
+        churDate: '2025-07-28',
+        paybackStatus: 'churned_before_31',
+        paybackEligibleDate: '2025-08-10',
+        isPaid: false
+      },
+
+      // 2025-07-16 ~ 2025-08-16 기간 가입자 (다섯 번째 정산 기간 - 현재 진행중)
+      {
+        id: 14,
+        name: '오성민',
+        joinDate: '2025-07-20',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: true,
+        retainedDays: 22, // 아직 31일 안됨
+        churDate: null,
+        paybackStatus: 'pending',
+        paybackEligibleDate: '2025-08-20',
+        isPaid: false
+      },
+      {
+        id: 15,
+        name: '장유진',
+        joinDate: '2025-07-25',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: true,
+        retainedDays: 17, // 아직 31일 안됨
+        churDate: null,
+        paybackStatus: 'pending',
+        paybackEligibleDate: '2025-08-25',
+        isPaid: false
+      },
+      {
+        id: 16,
+        name: '송지후',
+        joinDate: '2025-08-01',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: true,
+        retainedDays: 10, // 아직 31일 안됨
+        churDate: null,
+        paybackStatus: 'pending',
+        paybackEligibleDate: '2025-09-01',
+        isPaid: false
+      },
+      {
+        id: 17,
+        name: '배준호',
+        joinDate: '2025-08-05',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: false,
+        retainedDays: 5, // 5일만 유지 후 이탈
+        churDate: '2025-08-10',
+        paybackStatus: 'churned_before_31',
+        paybackEligibleDate: '2025-09-05',
+        isPaid: false
+      },
+      {
+        id: 18,
+        name: '문태현',
+        joinDate: '2025-08-08',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: true,
+        retainedDays: 3, // 아직 31일 안됨
+        churDate: null,
+        paybackStatus: 'pending',
+        paybackEligibleDate: '2025-09-08',
+        isPaid: false
+      },
+
+      // 추가 고객들
+      {
+        id: 19,
+        name: '신동진',
+        joinDate: '2025-05-25',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: true,
+        retainedDays: 77,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-06-25',
+        isPaid: true
+      },
+      {
+        id: 20,
+        name: '권혁진',
+        joinDate: '2025-06-05',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: true,
+        retainedDays: 66,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-06',
+        isPaid: true
+      },
+      {
+        id: 21,
+        name: '조민석',
+        joinDate: '2025-06-25',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: true,
+        retainedDays: 46,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-26',
+        isPaid: true
+      },
+      {
+        id: 22,
+        name: '황성호',
+        joinDate: '2025-07-05',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: true,
+        retainedDays: 36,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-08-05',
+        isPaid: true
+      },
+      {
+        id: 23,
+        name: '전우진',
+        joinDate: '2025-07-30',
+        originalPrice: 990000,
+        actualRevenue: 693000,
+        retained: true,
+        retainedDays: 12, // 아직 31일 안됨
+        churDate: null,
+        paybackStatus: 'pending',
+        paybackEligibleDate: '2025-08-30',
+        isPaid: false
+      }
+    ]
+  },
+  {
+    id: 2,
+    eventId: 1,
+    eventName: '5060 등산모임 밴드방 이벤트',
+    code: 'BAND2025_50',
+    discountRate: 50,
+    discountType: 'percentage',
+    maxUses: 20,
+    currentUses: 15,
+    status: 'active',
+    createdAt: '2025-04-01', // 정산 기준일
+    endDate: '2025-12-31',
+    revenue: 7425000, // 15명 × 495000원
+    retentionRate: 86,
+    paybackInfo: {
+      creatorName: '김관리',
+      contactPhone: '010-1111-1111',
+      contactEmail: 'kimgwanri@example.com',
+      bankName: '국민은행',
+      accountNumber: '123-456-789012',
+      accountHolder: '김관리',
+      paybackRate: 50000,
+      totalPayback: 650000 // 31일 유지 고객 13명 × 50000원
+    },
+    customers: [
+      {
+        id: 24,
+        name: '최지원',
+        joinDate: '2025-04-05',
+        originalPrice: 990000,
+        actualRevenue: 495000, // 50% 할인
+        retained: true,
+        retainedDays: 126,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-05-06',
+        isPaid: true
+      },
+      {
+        id: 25,
+        name: '정수민',
+        joinDate: '2025-04-15',
+        originalPrice: 990000,
+        actualRevenue: 495000,
+        retained: true,
+        retainedDays: 116,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-05-16',
+        isPaid: true
+      },
+      {
+        id: 26,
+        name: '김성훈',
+        joinDate: '2025-05-01',
+        originalPrice: 990000,
+        actualRevenue: 495000,
+        retained: true,
+        retainedDays: 101,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-06-01',
+        isPaid: true
+      },
+      {
+        id: 27,
+        name: '이준호',
+        joinDate: '2025-05-10',
+        originalPrice: 990000,
+        actualRevenue: 495000,
+        retained: false,
+        retainedDays: 15, // 15일 유지 후 이탈
+        churDate: '2025-05-25',
+        paybackStatus: 'churned_before_31',
+        paybackEligibleDate: '2025-06-10',
+        isPaid: false
+      },
+      {
+        id: 28,
+        name: '박재민',
+        joinDate: '2025-05-20',
+        originalPrice: 990000,
+        actualRevenue: 495000,
+        retained: true,
+        retainedDays: 82,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-06-20',
+        isPaid: true
+      },
+      {
+        id: 29,
+        name: '윤성호',
+        joinDate: '2025-06-01',
+        originalPrice: 990000,
+        actualRevenue: 495000,
+        retained: true,
+        retainedDays: 70,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-02',
+        isPaid: true
+      },
+      {
+        id: 30,
+        name: '강동현',
+        joinDate: '2025-06-15',
+        originalPrice: 990000,
+        actualRevenue: 495000,
+        retained: true,
+        retainedDays: 56,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-16',
+        isPaid: true
+      },
+      {
+        id: 31,
+        name: '임도현',
+        joinDate: '2025-07-01',
+        originalPrice: 990000,
+        actualRevenue: 495000,
+        retained: true,
+        retainedDays: 41,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-08-01',
+        isPaid: true
+      },
+      {
+        id: 32,
+        name: '조현우',
+        joinDate: '2025-07-10',
+        originalPrice: 990000,
+        actualRevenue: 495000,
+        retained: false,
+        retainedDays: 25, // 25일 유지 후 이탈
+        churDate: '2025-08-04',
+        paybackStatus: 'churned_before_31',
+        paybackEligibleDate: '2025-08-10',
+        isPaid: false
+      },
+      {
+        id: 33,
+        name: '한상민',
+        joinDate: '2025-07-15',
+        originalPrice: 990000,
+        actualRevenue: 495000,
+        retained: true,
+        retainedDays: 27, // 아직 31일 안됨
+        churDate: null,
+        paybackStatus: 'pending',
+        paybackEligibleDate: '2025-08-15',
+        isPaid: false
+      },
+      {
+        id: 34,
+        name: '신재호',
+        joinDate: '2025-07-25',
+        originalPrice: 990000,
+        actualRevenue: 495000,
+        retained: true,
+        retainedDays: 17, // 아직 31일 안됨
+        churDate: null,
+        paybackStatus: 'pending',
+        paybackEligibleDate: '2025-08-25',
+        isPaid: false
+      },
+      {
+        id: 35,
+        name: '오태윤',
+        joinDate: '2025-08-01',
+        originalPrice: 990000,
+        actualRevenue: 495000,
+        retained: true,
+        retainedDays: 10, // 아직 31일 안됨
+        churDate: null,
+        paybackStatus: 'pending',
+        paybackEligibleDate: '2025-09-01',
+        isPaid: false
+      },
+      {
+        id: 36,
+        name: '김도윤',
+        joinDate: '2025-06-25',
+        originalPrice: 990000,
+        actualRevenue: 495000,
+        retained: true,
+        retainedDays: 46,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-26',
+        isPaid: true
+      },
+      {
+        id: 37,
+        name: '서준혁',
+        joinDate: '2025-07-05',
+        originalPrice: 990000,
+        actualRevenue: 495000,
+        retained: true,
+        retainedDays: 36,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-08-05',
+        isPaid: true
+      },
+      {
+        id: 38,
+        name: '정하윤',
+        joinDate: '2025-07-20',
+        originalPrice: 990000,
+        actualRevenue: 495000,
+        retained: true,
+        retainedDays: 22, // 아직 31일 안됨
+        churDate: null,
+        paybackStatus: 'pending',
+        paybackEligibleDate: '2025-08-20',
+        isPaid: false
+      }
+    ]
+  },
+  {
+    id: 3,
+    eventId: 1,
+    eventName: '5060 등산모임 밴드방 이벤트',
+    code: 'BAND2025_20',
+    discountRate: 20,
+    discountType: 'percentage',
+    maxUses: 100,
+    currentUses: 7,
+    status: 'active',
+    createdAt: '2025-06-10',
+    endDate: '2025-12-31',
+    revenue: 5544000, // 7명 × 792000원
+    retentionRate: 71,
+    paybackInfo: {
+      creatorName: '김관리',
+      contactPhone: '010-1111-1111',
+      contactEmail: 'kimgwanri@example.com',
+      bankName: '국민은행',
+      accountNumber: '123-456-789012',
+      accountHolder: '김관리',
+      paybackRate: 50000,
+      totalPayback: 250000 // 31일 유지 고객 5명 × 50000원
+    },
+    customers: [
+      {
+        id: 39,
+        name: '강동욱',
+        joinDate: '2025-06-15',
+        originalPrice: 990000,
+        actualRevenue: 792000, // 20% 할인
+        retained: true,
+        retainedDays: 56,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-16',
+        isPaid: true
+      },
+      {
+        id: 40,
+        name: '이현준',
+        joinDate: '2025-06-20',
+        originalPrice: 990000,
+        actualRevenue: 792000,
+        retained: true,
+        retainedDays: 51,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-21',
+        isPaid: true
+      },
+      {
+        id: 41,
+        name: '박시현',
+        joinDate: '2025-07-01',
+        originalPrice: 990000,
+        actualRevenue: 792000,
+        retained: true,
+        retainedDays: 41,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-08-01',
+        isPaid: true
+      },
+      {
+        id: 42,
+        name: '김우진',
+        joinDate: '2025-07-10',
+        originalPrice: 990000,
+        actualRevenue: 792000,
+        retained: false,
+        retainedDays: 18, // 18일 유지 후 이탈
+        churDate: '2025-07-28',
+        paybackStatus: 'churned_before_31',
+        paybackEligibleDate: '2025-08-10',
+        isPaid: false
+      },
+      {
+        id: 43,
+        name: '정민호',
+        joinDate: '2025-07-15',
+        originalPrice: 990000,
+        actualRevenue: 792000,
+        retained: true,
+        retainedDays: 27, // 아직 31일 안됨
+        churDate: null,
+        paybackStatus: 'pending',
+        paybackEligibleDate: '2025-08-15',
+        isPaid: false
+      },
+      {
+        id: 44,
+        name: '윤준서',
+        joinDate: '2025-07-25',
+        originalPrice: 990000,
+        actualRevenue: 792000,
+        retained: false,
+        retainedDays: 10, // 10일 유지 후 이탈
+        churDate: '2025-08-04',
+        paybackStatus: 'churned_before_31',
+        paybackEligibleDate: '2025-08-25',
+        isPaid: false
+      },
+      {
+        id: 45,
+        name: '최준영',
+        joinDate: '2025-06-25',
+        originalPrice: 990000,
+        actualRevenue: 792000,
+        retained: true,
+        retainedDays: 46,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-26',
+        isPaid: true
+      }
+    ]
+  },
+  {
+    id: 4,
+    eventId: 2,
+    eventName: '유튜브 구독자 이벤트',
+    code: 'YOUTUBE2025_25',
+    discountRate: 25,
+    discountType: 'percentage',
+    maxUses: 30,
+    currentUses: 18,
+    status: 'active',
+    createdAt: '2025-05-15',
+    endDate: '2025-11-30',
+    revenue: 13365000, // 18명 × 742500원
+    retentionRate: 83,
+    paybackInfo: {
+      creatorName: '김유튜',
+      contactPhone: '010-2222-2222',
+      contactEmail: 'kimyoutube@example.com',
+      bankName: '신한은행',
+      accountNumber: '234-567-890123',
+      accountHolder: '김유튜',
+      paybackRate: 50000,
+      totalPayback: 750000 // 31일 유지 고객 15명 × 50000원
+    },
+    customers: [
+      {
+        id: 46,
+        name: '김태현',
+        joinDate: '2025-05-20',
+        originalPrice: 990000,
+        actualRevenue: 742500, // 25% 할인
+        retained: true,
+        retainedDays: 82,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-06-20',
+        isPaid: true
+      },
+      {
+        id: 47,
+        name: '이상훈',
+        joinDate: '2025-05-25',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: true,
+        retainedDays: 77,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-06-25',
+        isPaid: true
+      },
+      {
+        id: 48,
+        name: '박진우',
+        joinDate: '2025-06-01',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: true,
+        retainedDays: 70,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-02',
+        isPaid: true
+      },
+      {
+        id: 49,
+        name: '정호진',
+        joinDate: '2025-06-10',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: true,
+        retainedDays: 61,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-11',
+        isPaid: true
+      },
+      {
+        id: 50,
+        name: '최윤호',
+        joinDate: '2025-06-15',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: false,
+        retainedDays: 20, // 20일 유지 후 이탈
+        churDate: '2025-07-05',
+        paybackStatus: 'churned_before_31',
+        paybackEligibleDate: '2025-07-16',
+        isPaid: false
+      },
+      {
+        id: 51,
+        name: '신동혁',
+        joinDate: '2025-06-20',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: true,
+        retainedDays: 51,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-21',
+        isPaid: true
+      },
+      {
+        id: 52,
+        name: '한지호',
+        joinDate: '2025-06-25',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: true,
+        retainedDays: 46,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-26',
+        isPaid: true
+      },
+      {
+        id: 53,
+        name: '오민석',
+        joinDate: '2025-07-01',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: true,
+        retainedDays: 41,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-08-01',
+        isPaid: true
+      },
+      {
+        id: 54,
+        name: '임준혁',
+        joinDate: '2025-07-05',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: true,
+        retainedDays: 37,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-08-05',
+        isPaid: true
+      },
+      {
+        id: 55,
+        name: '노승우',
+        joinDate: '2025-07-10',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: false,
+        retainedDays: 25, // 25일 유지 후 이탈
+        churDate: '2025-08-04',
+        paybackStatus: 'churned_before_31',
+        paybackEligibleDate: '2025-08-10',
+        isPaid: false
+      },
+      {
+        id: 56,
+        name: '전성민',
+        joinDate: '2025-07-15',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: true,
+        retainedDays: 27, // 아직 31일 안됨
+        churDate: null,
+        paybackStatus: 'pending',
+        paybackEligibleDate: '2025-08-15',
+        isPaid: false
+      },
+      {
+        id: 57,
+        name: '황도현',
+        joinDate: '2025-07-20',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: true,
+        retainedDays: 22, // 아직 31일 안됨
+        churDate: null,
+        paybackStatus: 'pending',
+        paybackEligibleDate: '2025-08-20',
+        isPaid: false
+      },
+      {
+        id: 58,
+        name: '배준서',
+        joinDate: '2025-07-25',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: false,
+        retainedDays: 12, // 12일 유지 후 이탈
+        churDate: '2025-08-06',
+        paybackStatus: 'churned_before_31',
+        paybackEligibleDate: '2025-08-25',
+        isPaid: false
+      },
+      {
+        id: 59,
+        name: '문시우',
+        joinDate: '2025-07-30',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: true,
+        retainedDays: 12, // 아직 31일 안됨
+        churDate: null,
+        paybackStatus: 'pending',
+        paybackEligibleDate: '2025-08-30',
+        isPaid: false
+      },
+      {
+        id: 60,
+        name: '서건우',
+        joinDate: '2025-05-30',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: true,
+        retainedDays: 72,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-06-30',
+        isPaid: true
+      },
+      {
+        id: 61,
+        name: '조민우',
+        joinDate: '2025-06-05',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: true,
+        retainedDays: 66,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-06',
+        isPaid: true
+      },
+      {
+        id: 62,
+        name: '권현수',
+        joinDate: '2025-06-28',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: true,
+        retainedDays: 43,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-29',
+        isPaid: true
+      },
+      {
+        id: 63,
+        name: '양준호',
+        joinDate: '2025-07-08',
+        originalPrice: 990000,
+        actualRevenue: 742500,
+        retained: true,
+        retainedDays: 34,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-08-08',
+        isPaid: true
+      }
+    ]
+  },
+  {
+    id: 5,
+    eventId: 2,
+    eventName: '유튜브 구독자 이벤트',
+    code: 'YOUTUBE2025_40',
+    discountRate: 40,
+    discountType: 'percentage',
+    maxUses: 15,
+    currentUses: 10,
+    status: 'active',
+    createdAt: '2025-05-20',
+    endDate: '2025-11-30',
+    revenue: 5940000, // 10명 × 594000원
+    retentionRate: 90,
+    paybackInfo: {
+      creatorName: '김유튜',
+      contactPhone: '010-2222-2222',
+      contactEmail: 'kimyoutube@example.com',
+      bankName: '신한은행',
+      accountNumber: '234-567-890123',
+      accountHolder: '김유튜',
+      paybackRate: 50000,
+      totalPayback: 400000 // 31일 유지 고객 8명 × 50000원
+    },
+    customers: [
+      {
+        id: 64,
+        name: '김민재',
+        joinDate: '2025-05-25',
+        originalPrice: 990000,
+        actualRevenue: 594000, // 40% 할인
+        retained: true,
+        retainedDays: 77,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-06-25',
+        isPaid: true
+      },
+      {
+        id: 65,
+        name: '이도윤',
+        joinDate: '2025-06-01',
+        originalPrice: 990000,
+        actualRevenue: 594000,
+        retained: true,
+        retainedDays: 70,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-02',
+        isPaid: true
+      },
+      {
+        id: 66,
+        name: '박서준',
+        joinDate: '2025-06-10',
+        originalPrice: 990000,
+        actualRevenue: 594000,
+        retained: true,
+        retainedDays: 61,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-11',
+        isPaid: true
+      },
+      {
+        id: 67,
+        name: '정시원',
+        joinDate: '2025-06-20',
+        originalPrice: 990000,
+        actualRevenue: 594000,
+        retained: true,
+        retainedDays: 51,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-21',
+        isPaid: true
+      },
+      {
+        id: 68,
+        name: '최준혁',
+        joinDate: '2025-07-01',
+        originalPrice: 990000,
+        actualRevenue: 594000,
+        retained: true,
+        retainedDays: 41,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-08-01',
+        isPaid: true
+      },
+      {
+        id: 69,
+        name: '신우진',
+        joinDate: '2025-07-10',
+        originalPrice: 990000,
+        actualRevenue: 594000,
+        retained: true,
+        retainedDays: 32,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-08-10',
+        isPaid: true
+      },
+      {
+        id: 70,
+        name: '한재민',
+        joinDate: '2025-07-15',
+        originalPrice: 990000,
+        actualRevenue: 594000,
+        retained: false,
+        retainedDays: 20, // 20일 유지 후 이탈
+        churDate: '2025-08-04',
+        paybackStatus: 'churned_before_31',
+        paybackEligibleDate: '2025-08-15',
+        isPaid: false
+      },
+      {
+        id: 71,
+        name: '오태민',
+        joinDate: '2025-07-20',
+        originalPrice: 990000,
+        actualRevenue: 594000,
+        retained: true,
+        retainedDays: 22, // 아직 31일 안됨
+        churDate: null,
+        paybackStatus: 'pending',
+        paybackEligibleDate: '2025-08-20',
+        isPaid: false
+      },
+      {
+        id: 72,
+        name: '임현우',
+        joinDate: '2025-07-25',
+        originalPrice: 990000,
+        actualRevenue: 594000,
+        retained: false,
+        retainedDays: 15, // 15일 유지 후 이탈
+        churDate: '2025-08-09',
+        paybackStatus: 'churned_before_31',
+        paybackEligibleDate: '2025-08-25',
+        isPaid: false
+      },
+      {
+        id: 73,
+        name: '노준석',
+        joinDate: '2025-06-25',
+        originalPrice: 990000,
+        actualRevenue: 594000,
+        retained: true,
+        retainedDays: 46,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-26',
+        isPaid: true
+      }
+    ]
+  },
+  {
+    id: 6,
+    eventId: 3,
+    eventName: '60대 골프모임 카카오톡 오픈채팅방 이벤트',
+    code: 'GOLF2025_35',
+    discountRate: 35,
+    discountType: 'percentage',
+    maxUses: 25,
+    currentUses: 12,
+    status: 'ended',
+    createdAt: '2025-04-01',
+    endDate: '2025-05-31',
+    revenue: 7722000, // 12명 × 643500원
+    retentionRate: 75,
+    paybackInfo: {
+      creatorName: '박골프',
+      contactPhone: '010-3333-3333',
+      contactEmail: 'parkgolf@example.com',
+      bankName: '우리은행',
+      accountNumber: '345-678-901234',
+      accountHolder: '박골프',
+      paybackRate: 50000,
+      totalPayback: 450000 // 31일 유지 고객 9명 × 50000원
+    },
+    customers: [
+      {
+        id: 74,
+        name: '김용수',
+        joinDate: '2025-04-05',
+        originalPrice: 990000,
+        actualRevenue: 643500, // 35% 할인
+        retained: false,
+        retainedDays: 45, // 45일 유지 후 이탈 (31일 후 이탈)
+        churDate: '2025-05-20',
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-05-06',
+        isPaid: true
+      },
+      {
+        id: 75,
+        name: '이상철',
+        joinDate: '2025-04-10',
+        originalPrice: 990000,
+        actualRevenue: 643500,
+        retained: true,
+        retainedDays: 121,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-05-11',
+        isPaid: true
+      },
+      {
+        id: 76,
+        name: '박종민',
+        joinDate: '2025-04-15',
+        originalPrice: 990000,
+        actualRevenue: 643500,
+        retained: true,
+        retainedDays: 116,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-05-16',
+        isPaid: true
+      },
+      {
+        id: 77,
+        name: '정태호',
+        joinDate: '2025-04-20',
+        originalPrice: 990000,
+        actualRevenue: 643500,
+        retained: false,
+        retainedDays: 25, // 25일 유지 후 이탈
+        churDate: '2025-05-15',
+        paybackStatus: 'churned_before_31',
+        paybackEligibleDate: '2025-05-21',
+        isPaid: false
+      },
+      {
+        id: 78,
+        name: '최영진',
+        joinDate: '2025-04-25',
+        originalPrice: 990000,
+        actualRevenue: 643500,
+        retained: false,
+        retainedDays: 40, // 40일 유지 후 이탈 (31일 후 이탈)
+        churDate: '2025-06-04',
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-05-26',
+        isPaid: true
+      },
+      {
+        id: 79,
+        name: '신동수',
+        joinDate: '2025-05-01',
+        originalPrice: 990000,
+        actualRevenue: 643500,
+        retained: true,
+        retainedDays: 101,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-06-01',
+        isPaid: true
+      },
+      {
+        id: 80,
+        name: '한규호',
+        joinDate: '2025-05-05',
+        originalPrice: 990000,
+        actualRevenue: 643500,
+        retained: false,
+        retainedDays: 20, // 20일 유지 후 이탈
+        churDate: '2025-05-25',
+        paybackStatus: 'churned_before_31',
+        paybackEligibleDate: '2025-06-05',
+        isPaid: false
+      },
+      {
+        id: 81,
+        name: '오민석',
+        joinDate: '2025-05-10',
+        originalPrice: 990000,
+        actualRevenue: 643500,
+        retained: true,
+        retainedDays: 92,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-06-10',
+        isPaid: true
+      },
+      {
+        id: 82,
+        name: '임강호',
+        joinDate: '2025-05-15',
+        originalPrice: 990000,
+        actualRevenue: 643500,
+        retained: false,
+        retainedDays: 35, // 35일 유지 후 이탈 (31일 후 이탈)
+        churDate: '2025-06-19',
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-06-15',
+        isPaid: true
+      },
+      {
+        id: 83,
+        name: '노재현',
+        joinDate: '2025-05-20',
+        originalPrice: 990000,
+        actualRevenue: 643500,
+        retained: false,
+        retainedDays: 18, // 18일 유지 후 이탈
+        churDate: '2025-06-07',
+        paybackStatus: 'churned_before_31',
+        paybackEligibleDate: '2025-06-20',
+        isPaid: false
+      },
+      {
+        id: 84,
+        name: '전우성',
+        joinDate: '2025-05-25',
+        originalPrice: 990000,
+        actualRevenue: 643500,
+        retained: true,
+        retainedDays: 77,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-06-25',
+        isPaid: true
+      },
+      {
+        id: 85,
+        name: '황성민',
+        joinDate: '2025-04-30',
+        originalPrice: 990000,
+        actualRevenue: 643500,
+        retained: true,
+        retainedDays: 102,
+        churDate: null,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-05-31',
+        isPaid: true
+      }
+    ]
+  }
+];
 
 // 이벤트별 총 매출 계산 함수
 export const calculateEventTotalRevenue = (eventId) => {
@@ -47,10 +1329,7 @@ export const calculateEventTotalRevenue = (eventId) => {
       code => code.eventId === eventId);
 
   return eventReferralCodes.reduce((total, referralCode) => {
-    const discountedPrice = SERVICE_BASE_PRICE * (1 - referralCode.discountRate
-        / 100);
-    const codeRevenue = discountedPrice * referralCode.currentUses;
-    return total + codeRevenue;
+    return total + referralCode.revenue;
   }, 0);
 };
 
@@ -61,269 +1340,12 @@ export const calculateEventTotalRedeems = (eventId) => {
   return eventReferralCodes.reduce((total, code) => total + code.currentUses,
       0);
 };
+
+// 레퍼럴 코드별 매출 계산 함수
 export const calculateReferralRevenue = (discountRate, currentUses) => {
   const discountedPrice = SERVICE_BASE_PRICE * (1 - discountRate / 100);
   return discountedPrice * currentUses;
 };
-
-// 레퍼럴 코드 데이터
-export const referralCodes = [
-  {
-    id: 1,
-    eventId: 1,
-    code: 'SINU2025BAND',
-    discountRate: 30,
-    discountType: 'percentage', // percentage, fixed
-    maxUses: 50,
-    currentUses: 23,
-    status: 'active', // active, inactive, ended
-    createdAt: '2025-06-01',
-    endDate: '2025-12-31',
-    revenue: 1150000,
-    retentionRate: 78, // 한달 이상 유지율
-    // 정산 정보
-    paybackInfo: {
-      creatorName: '신상원',
-      contactPhone: '010-1234-5678',
-      contactEmail: 'sinusangwon@example.com',
-      bankName: '국민은행',
-      accountNumber: '123-456-789012',
-      accountHolder: '신상원',
-      paybackRate: 50000, // 인당 5만원
-      totalPayback: 1150000 // 23명 * 50000원
-    },
-    customers: [
-      {
-        id: 1,
-        name: '김철수',
-        phone: '010-1111-2222',
-        joinDate: '2025-06-02',
-        retained: true,
-        retainedDays: 67, // 가입 후 67일째 유지중 (31일 초과)
-        churDate: null,
-        originalPrice: 990000,
-        discountRate: 30,
-        actualRevenue: 693000,
-        paybackDue: 50000,
-        // 정산 상태 추가
-        paybackStatus: 'payable', // payable: 지급 대상, pending: 대기중, churned_before_31: 31일 전 이탈
-        paybackEligibleDate: '2025-07-03', // 31일째 되는 날 (페이백 자격 획득일)
-        isPaid: false // 실제 지급 여부
-      },
-      {
-        id: 2,
-        name: '이영희',
-        phone: '010-2222-3333',
-        joinDate: '2025-06-03',
-        retained: true,
-        retainedDays: 66, // 66일째 유지중 (31일 초과)
-        churDate: null,
-        originalPrice: 990000,
-        discountRate: 30,
-        actualRevenue: 693000,
-        paybackDue: 50000,
-        paybackStatus: 'payable',
-        paybackEligibleDate: '2025-07-04',
-        isPaid: true // 이미 지급됨
-      },
-      {
-        id: 3,
-        name: '박민수',
-        phone: '010-3333-4444',
-        joinDate: '2025-06-05',
-        retained: false,
-        retainedDays: 45, // 45일간 유지 후 이탈 (31일 후 이탈)
-        churDate: '2025-07-20',
-        originalPrice: 990000,
-        discountRate: 30,
-        actualRevenue: 693000,
-        paybackDue: 50000,
-        paybackStatus: 'payable', // 31일 후 이탈이므로 지급 대상
-        paybackEligibleDate: '2025-07-06',
-        isPaid: false
-      },
-      {
-        id: 7,
-        name: '홍성민',
-        phone: '010-7777-8888',
-        joinDate: '2025-07-25', // 최근 가입자 (아직 31일 안됨)
-        retained: true,
-        retainedDays: 17, // 17일째 유지중
-        churDate: null,
-        originalPrice: 990000,
-        discountRate: 30,
-        actualRevenue: 693000,
-        paybackDue: 50000,
-        paybackStatus: 'pending', // 31일 대기중
-        paybackEligibleDate: '2025-08-25', // 31일째 되는 날
-        isPaid: false
-      },
-      {
-        id: 8,
-        name: '윤지훈',
-        phone: '010-8888-9999',
-        joinDate: '2025-07-10',
-        retained: false,
-        retainedDays: 20, // 20일만 유지 후 이탈
-        churDate: '2025-07-30',
-        originalPrice: 990000,
-        discountRate: 30,
-        actualRevenue: 693000,
-        paybackDue: 0, // 31일 전 이탈로 페이백 없음
-        paybackStatus: 'churned_before_31', // 31일 전 이탈
-        paybackEligibleDate: '2025-08-10',
-        isPaid: false
-      }
-    ]
-  },
-  {
-    id: 2,
-    eventId: 1,
-    code: 'SINU2025VIP',
-    discountRate: 50,
-    discountType: 'percentage',
-    maxUses: 20,
-    currentUses: 15,
-    status: 'active',
-    createdAt: '2025-06-05',
-    endDate: '2025-12-31',
-    revenue: 750000,
-    retentionRate: 86,
-    paybackInfo: {
-      creatorName: '신상원',
-      contactPhone: '010-1234-5678',
-      contactEmail: 'sinusangwon@example.com',
-      bankName: '국민은행',
-      accountNumber: '123-456-789012',
-      accountHolder: '신상원',
-      paybackRate: 50000,
-      totalPayback: 750000 // 15명 * 50000원
-    },
-    customers: [
-      {
-        id: 4,
-        name: '최지원',
-        phone: '010-4444-5555',
-        joinDate: '2025-06-06',
-        retained: true,
-        retainedDays: 63, // 63일째 유지중 (31일 초과)
-        churDate: null,
-        originalPrice: 990000,
-        discountRate: 50,
-        actualRevenue: 495000,
-        paybackDue: 50000,
-        paybackStatus: 'payable',
-        paybackEligibleDate: '2025-07-07',
-        isPaid: true // 이미 지급됨
-      },
-      {
-        id: 5,
-        name: '정수민',
-        phone: '010-5555-6666',
-        joinDate: '2025-06-07',
-        retained: true,
-        retainedDays: 62, // 62일째 유지중 (31일 초과)
-        churDate: null,
-        originalPrice: 990000,
-        discountRate: 50,
-        actualRevenue: 495000,
-        paybackDue: 50000,
-        paybackStatus: 'payable',
-        paybackEligibleDate: '2025-07-08',
-        isPaid: false
-      },
-    ]
-  },
-  {
-    id: 3,
-    eventId: 1,
-    code: 'SINU2025NEW',
-    discountRate: 20,
-    discountType: 'percentage',
-    maxUses: 100,
-    currentUses: 7,
-    status: 'active',
-    createdAt: '2025-06-10',
-    endDate: '2025-12-31',
-    revenue: 350000,
-    retentionRate: 71,
-    paybackInfo: {
-      creatorName: '신상원',
-      contactPhone: '010-1234-5678',
-      contactEmail: 'sinusangwon@example.com',
-      bankName: '국민은행',
-      accountNumber: '123-456-789012',
-      accountHolder: '신상원',
-      paybackRate: 50000,
-      totalPayback: 350000 // 7명 * 50000원
-    },
-    customers: [
-      {
-        id: 6,
-        name: '강동욱',
-        phone: '010-6666-7777',
-        joinDate: '2025-06-11',
-        retained: true,
-        retainedDays: 58,
-        churDate: null,
-        originalPrice: 990000,
-        discountRate: 20, // 20% 할인
-        actualRevenue: 792000, // 99만원 - 20% = 79만 2천원
-        paybackDue: 50000
-      },
-    ]
-  },
-  {
-    id: 4,
-    eventId: 2,
-    code: 'JONGHYUK2025',
-    discountRate: 25,
-    discountType: 'percentage',
-    maxUses: 30,
-    currentUses: 18,
-    status: 'active',
-    createdAt: '2025-05-15',
-    endDate: '2025-11-30',
-    revenue: 900000,
-    retentionRate: 83,
-    paybackInfo: {
-      creatorName: '이종혁',
-      contactPhone: '010-2345-6789',
-      contactEmail: 'jonghyuk@example.com',
-      bankName: '신한은행',
-      accountNumber: '234-567-890123',
-      accountHolder: '이종혁',
-      paybackRate: 50000,
-      totalPayback: 900000 // 18명 * 50000원
-    },
-    customers: []
-  },
-  {
-    id: 5,
-    eventId: 2,
-    code: 'JONGHYUK50',
-    discountRate: 40,
-    discountType: 'percentage',
-    maxUses: 15,
-    currentUses: 10,
-    status: 'active',
-    createdAt: '2025-05-20',
-    endDate: '2025-11-30',
-    revenue: 500000,
-    retentionRate: 90,
-    paybackInfo: {
-      creatorName: '이종혁',
-      contactPhone: '010-2345-6789',
-      contactEmail: 'jonghyuk@example.com',
-      bankName: '신한은행',
-      accountNumber: '234-567-890123',
-      accountHolder: '이종혁',
-      paybackRate: 50000,
-      totalPayback: 500000 // 10명 * 50000원
-    },
-    customers: []
-  }
-];
 
 // 이벤트 상태별 스타일
 export const getEventStatusStyle = (status) => {
@@ -345,37 +1367,17 @@ export const generateReferralCode = (eventName, discountRate) => {
   const extractKeywords = (name) => {
     const keywords = [];
 
-    // 전문가 이름 추출
-    if (name.includes('신상원')) {
-      keywords.push('SINU');
-    } else if (name.includes('이종혁')) {
-      keywords.push('JONGHYUK');
-    } else if (name.includes('금산')) {
-      keywords.push('KUMSAN');
-    } else if (name.includes('김형일')) {
-      keywords.push('KIMHI');
-    } else if (name.includes('이관욱')) {
-      keywords.push('LEEGOW');
-    }
-
     // 플랫폼/채널 추출
-    if (name.includes('네이버') || name.includes('밴드')) {
+    if (name.includes('밴드')) {
       keywords.push('BAND');
     } else if (name.includes('유튜브')) {
       keywords.push('YOUTUBE');
     } else if (name.includes('카카오')) {
       keywords.push('KAKAO');
-    } else if (name.includes('인스타')) {
-      keywords.push('INSTA');
-    }
-
-    // 이벤트 타입 추출
-    if (name.includes('VIP') || name.includes('특별')) {
-      keywords.push('VIP');
-    } else if (name.includes('신규')) {
-      keywords.push('NEW');
-    } else if (name.includes('할인')) {
-      keywords.push('SALE');
+    } else if (name.includes('골프')) {
+      keywords.push('GOLF');
+    } else if (name.includes('등산')) {
+      keywords.push('HIKING');
     }
 
     return keywords;
@@ -385,15 +1387,13 @@ export const generateReferralCode = (eventName, discountRate) => {
   const year = new Date().getFullYear();
   const randomNum = Math.floor(Math.random() * 99) + 1;
 
-  // 기본 코드 구조: [전문가]_[플랫폼]_[연도]_[할인율]_[랜덤숫자]
+  // 기본 코드 구조: [플랫폼]_[연도]_[할인율]_[랜덤숫자]
   let code = '';
 
-  if (keywords.length >= 2) {
-    code = `${keywords[0]}_${keywords[1]}_${year}`;
-  } else if (keywords.length === 1) {
-    code = `${keywords[0]}_${year}`;
+  if (keywords.length >= 1) {
+    code = `${keywords[0]}${year}`;
   } else {
-    code = `EVENT_${year}`;
+    code = `EVENT${year}`;
   }
 
   // 할인율이 있으면 추가
@@ -431,167 +1431,7 @@ export const generateUniqueReferralCode = (eventName, discountRate) => {
   return code;
 };
 
-// 엑셀 정산 데이터 생성 함수 (정산 완료된 항목 제외)
-export const generateSettlementData = () => {
-  const settlementData = [];
-
-  events.forEach(event => {
-    const eventReferralCodes = referralCodes.filter(
-        code => code.eventId === event.id);
-
-    eventReferralCodes.forEach(referralCode => {
-      // 사용자가 있고, 아직 정산되지 않은 코드만 포함
-      if (referralCode.currentUses > 0
-          && !referralCode.paybackInfo?.isSettled) {
-        // 고객 전화번호 목록 생성 (처음 2개만 표시, 나머지는 "외 N명")
-        const customerPhones = referralCode.customers.map(
-            customer => customer.phone);
-        let displayPhones;
-
-        if (customerPhones.length <= 2) {
-          displayPhones = customerPhones.join(', ');
-        } else {
-          const firstTwo = customerPhones.slice(0, 2).join(', ');
-          const remaining = customerPhones.length - 2;
-          displayPhones = `${firstTwo} 외 ${remaining}명`;
-        }
-
-        // 매출 계산
-        const totalRevenue = calculateReferralRevenue(referralCode.discountRate,
-            referralCode.currentUses);
-
-        // 페이백 금액 계산 (31일 이상 유지한 고객 수 × 5만원)
-        const payableCustomers = referralCode.customers.filter(customer =>
-            customer.paybackStatus === 'payable' || customer.isPaid
-        ).length;
-        const paybackAmount = payableCustomers * 50000;
-
-        settlementData.push({
-          eventName: event.name,
-          referralCode: referralCode.code,
-          creatorInfo: `${referralCode.paybackInfo?.creatorName
-          || '정보없음'} | ${referralCode.paybackInfo?.creatorTitle
-          || '정보없음'} | ${referralCode.paybackInfo?.contactPhone || '정보없음'}`,
-          creatorName: referralCode.paybackInfo?.creatorName || '정보없음',
-          creatorTitle: referralCode.paybackInfo?.creatorTitle || '정보없음',
-          creatorPhone: referralCode.paybackInfo?.contactPhone || '정보없음',
-          customerPhones: displayPhones || '고객 없음',
-          totalCustomers: referralCode.currentUses,
-          totalRevenue: totalRevenue,
-          paybackAmount: paybackAmount,
-          discountRate: referralCode.discountRate,
-          bankInfo: `${referralCode.paybackInfo?.bankName
-          || ''} ${referralCode.paybackInfo?.accountNumber
-          || ''} ${referralCode.paybackInfo?.accountHolder || ''}`.trim(),
-          isSettled: referralCode.paybackInfo?.isSettled || false
-        });
-      }
-    });
-  });
-
-  return settlementData;
-};
-
-// 정산 완료된 데이터만 조회하는 함수
-export const getCompletedSettlements = () => {
-  const completedData = [];
-
-  events.forEach(event => {
-    const eventReferralCodes = referralCodes.filter(
-        code => code.eventId === event.id);
-
-    eventReferralCodes.forEach(referralCode => {
-      if (referralCode.currentUses > 0 && referralCode.paybackInfo?.isSettled) {
-        const customerPhones = referralCode.customers.map(
-            customer => customer.phone);
-        let displayPhones;
-
-        if (customerPhones.length <= 2) {
-          displayPhones = customerPhones.join(', ');
-        } else {
-          const firstTwo = customerPhones.slice(0, 2).join(', ');
-          const remaining = customerPhones.length - 2;
-          displayPhones = `${firstTwo} 외 ${remaining}명`;
-        }
-
-        const totalRevenue = calculateReferralRevenue(referralCode.discountRate,
-            referralCode.currentUses);
-        const payableCustomers = referralCode.customers.filter(customer =>
-            customer.paybackStatus === 'payable' || customer.isPaid
-        ).length;
-        const paybackAmount = payableCustomers * 50000;
-
-        completedData.push({
-          eventName: event.name,
-          referralCode: referralCode.code,
-          creatorInfo: `${referralCode.paybackInfo?.creatorName
-          || '정보없음'} | ${referralCode.paybackInfo?.creatorTitle
-          || '정보없음'} | ${referralCode.paybackInfo?.contactPhone || '정보없음'}`,
-          creatorName: referralCode.paybackInfo?.creatorName || '정보없음',
-          creatorTitle: referralCode.paybackInfo?.creatorTitle || '정보없음',
-          creatorPhone: referralCode.paybackInfo?.contactPhone || '정보없음',
-          customerPhones: displayPhones || '고객 없음',
-          totalCustomers: referralCode.currentUses,
-          totalRevenue: totalRevenue,
-          paybackAmount: paybackAmount,
-          discountRate: referralCode.discountRate,
-          bankInfo: `${referralCode.paybackInfo?.bankName
-          || ''} ${referralCode.paybackInfo?.accountNumber
-          || ''} ${referralCode.paybackInfo?.accountHolder || ''}`.trim(),
-          isSettled: true,
-          settledDate: '2025-07-31' // 정산 완료일 (예시)
-        });
-      }
-    });
-  });
-
-  return completedData;
-};
-
-// CSV 형태로 변환하는 함수
-export const convertToCSV = (data) => {
-  const headers = [
-    '이벤트 이름',
-    '레퍼럴 코드',
-    '생성자 정보',
-    '고객 전화번호',
-    '총 고객 수',
-    '총 매출',
-    '페이백 금액',
-    '할인율',
-    '계좌 정보'
-  ];
-
-  const csvContent = [
-    headers.join(','),
-    ...data.map(row => [
-      `"${row.eventName}"`,
-      `"${row.referralCode}"`,
-      `"${row.creatorInfo}"`,
-      `"${row.customerPhones}"`,
-      row.totalCustomers,
-      row.totalRevenue,
-      row.paybackAmount,
-      `${row.discountRate}%`,
-      `"${row.bankInfo}"`
-    ].join(','))
-  ].join('\n');
-
-  return csvContent;
-};
-
-// 파일 다운로드 함수
-export const downloadFile = (content, filename, contentType) => {
-  const blob = new Blob([content], {type: contentType});
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  window.URL.revokeObjectURL(url);
-};
+// 페이백 상태별 스타일
 export const getPaybackStatusStyle = (status, isPaid) => {
   if (isPaid) {
     return {
@@ -646,4 +1486,37 @@ export const getReferralStatusStyle = (status) => {
     default:
       return {bg: '#f3f4f6', color: '#4a5568', text: '알 수 없음'};
   }
+};
+
+// CSV 다운로드 관련 함수들 (기존 정산 관리용 - 호환성 유지)
+export const generateSettlementData = () => {
+  // 새로운 정산 시스템에서는 사용하지 않지만 호환성을 위해 유지
+  return [];
+};
+
+export const getCompletedSettlements = () => {
+  // 새로운 정산 시스템에서는 사용하지 않지만 호환성을 위해 유지
+  return [];
+};
+
+export const convertToCSV = (data) => {
+  const headers = Object.keys(data[0] || {});
+  const csvContent = [
+    headers.join(','),
+    ...data.map(
+        row => headers.map(header => `"${row[header] || ''}"`).join(','))
+  ].join('\n');
+  return csvContent;
+};
+
+export const downloadFile = (content, filename, contentType) => {
+  const blob = new Blob([content], {type: contentType});
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
 };

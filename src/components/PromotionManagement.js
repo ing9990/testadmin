@@ -1,8 +1,9 @@
+// src/components/PromotionManagement.js
 import React, {useState} from 'react';
 import EventManagement from './EventManagement';
 import EventDetail from './EventDetail';
 import ReferralDetail from './ReferralDetail';
-import SettlementManagement from './SettlementManagement';
+import SettlementManagement from './SettlementManagement'; // 새로 추가
 
 const PromotionManagement = ({selectedMenu}) => {
   const [currentView, setCurrentView] = useState('events'); // events, eventDetail, referralDetail
@@ -30,6 +31,7 @@ const PromotionManagement = ({selectedMenu}) => {
     setSelectedReferral(null);
   };
 
+  // 정산 관리 페이지로 변경
   if (selectedMenu === '정산 관리') {
     return <SettlementManagement/>;
   }

@@ -1,76 +1,177 @@
-import React, {useState} from 'react';
+// src/components/SettlementManagement.js
+import React, {useMemo, useState} from 'react';
 import {
+  FiCalendar,
   FiDollarSign,
   FiDownload,
-  FiEye,
-  FiEyeOff,
-  FiFileText,
+  FiTrendingUp,
   FiUsers
 } from 'react-icons/fi';
-import {
-  convertToCSV,
-  downloadFile,
-  generateSettlementData,
-  getCompletedSettlements
-} from '../data/promotionData';
+import {referralCodes} from '../data/promotionData';
 
 const SettlementManagement = () => {
-  const [settlementData, setSettlementData] = useState(
-      generateSettlementData());
-  const [showCompleted, setShowCompleted] = useState(false);
-  const [completedData, setCompletedData] = useState(getCompletedSettlements());
+  const [selectedPeriod, setSelectedPeriod] = useState('current');
+  const [hoveredCard, setHoveredCard] = useState(null);
 
-  const currentData = showCompleted ? completedData : settlementData;
+  // 현재 날짜 기준으로 정산 기간 계산
+  const calculateSettlementPeriod = (createdDate) => {
+    const created = new Date(createdDate);
+    const now = new Date();
 
-  const handleDownloadCSV = () => {
-    const csvContent = convertToCSV(currentData);
-    const currentDate = new Date().toISOString().split('T')[0];
-    const filePrefix = showCompleted ? '정산완료' : '정산대기';
-    downloadFile(csvContent, `레퍼럴_${filePrefix}_${currentDate}.csv`,
-        'text/csv;charset=utf-8;');
+    // 현재 정산 기간 계산 (레퍼럴 코드 생성일 기준)
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const createdDay = created.getDate();
+
+    // 현재 정산 기간의 시작일
+    let periodStart = new Date(currentYear, currentMonth, createdDay);
+    if (periodStart > now) {
+      // 아직 이번 달 정산일이 안 되었으면 이전 달
+      periodStart = new Date(currentYear, currentMonth - 1, createdDay);
+    }
+
+    // 정산 기간 종료일 (다음 달 같은 날)
+    const periodEnd = new Date(periodStart.getFullYear(),
+        periodStart.getMonth() + 1, periodStart.getDate());
+
+    return {periodStart, periodEnd};
   };
 
-  const handleDownloadExcel = () => {
-    // 간단한 TSV 형태로 엑셀 호환 파일 생성
-    const headers = [
-      '이벤트 이름',
-      '레퍼럴 코드',
-      '생성자 정보',
-      '고객 전화번호',
-      '총 고객 수',
-      '총 매출',
-      '페이백 금액',
-      '할인율',
-      '계좌 정보'
-    ];
+  // 31일 유지 여부 확인
+  const checkRetention31Days = (customer) => {
+    const joinDate = new Date(customer.joinDate);
+    const now = new Date();
 
-    const tsvContent = [
-      headers.join('\t'),
-      ...currentData.map(row => [
-        row.eventName,
-        row.referralCode,
-        row.creatorInfo,
-        row.customerPhones,
-        row.totalCustomers,
-        row.totalRevenue,
-        row.paybackAmount,
-        `${row.discountRate}%`,
-        row.bankInfo
-      ].join('\t'))
+    if (customer.churDate) {
+      const churnDate = new Date(customer.churDate);
+      const retentionDays = Math.floor(
+          (churnDate - joinDate) / (1000 * 60 * 60 * 24));
+      return retentionDays >= 31;
+    }
+
+    // 아직 이탈하지 않은 경우
+    const daysSinceJoin = Math.floor((now - joinDate) / (1000 * 60 * 60 * 24));
+    return daysSinceJoin >= 31;
+  };
+
+  // 정산 데이터 계산
+  const calculateSettlementData = (referralCode) => {
+    const {periodStart, periodEnd} = calculateSettlementPeriod(
+        referralCode.createdAt);
+
+    // 전체 데이터
+    const totalCustomers = referralCode.customers.length;
+    const totalRevenue = referralCode.customers.reduce(
+        (sum, customer) => sum + customer.actualRevenue, 0);
+    const totalRetained31Days = referralCode.customers.filter(
+        customer => checkRetention31Days(customer)).length;
+    const totalPayback = totalRetained31Days * 50000;
+
+    // 당월 데이터 (정산 기간 내 가입한 고객)
+    const currentMonthCustomers = referralCode.customers.filter(customer => {
+      const joinDate = new Date(customer.joinDate);
+      return joinDate >= periodStart && joinDate < periodEnd;
+    });
+
+    const currentMonthRevenue = currentMonthCustomers.reduce(
+        (sum, customer) => sum + customer.actualRevenue, 0);
+    const currentMonthRetained31Days = currentMonthCustomers.filter(
+        customer => checkRetention31Days(customer)).length;
+    const currentMonthPayback = currentMonthRetained31Days * 50000;
+
+    // 할인 금액 계산
+    const totalOriginalPrice = referralCode.customers.reduce(
+        (sum, customer) => sum + customer.originalPrice, 0);
+    const totalDiscountAmount = totalOriginalPrice - totalRevenue;
+
+    const currentMonthOriginalPrice = currentMonthCustomers.reduce(
+        (sum, customer) => sum + customer.originalPrice, 0);
+    const currentMonthDiscountAmount = currentMonthOriginalPrice
+        - currentMonthRevenue;
+
+    return {
+      periodStart,
+      periodEnd,
+      total: {
+        customers: totalCustomers,
+        revenue: totalRevenue,
+        payback: totalPayback,
+        originalPrice: totalOriginalPrice,
+        discountAmount: totalDiscountAmount,
+        retained31Days: totalRetained31Days
+      },
+      currentMonth: {
+        customers: currentMonthCustomers.length,
+        revenue: currentMonthRevenue,
+        payback: currentMonthPayback,
+        originalPrice: currentMonthOriginalPrice,
+        discountAmount: currentMonthDiscountAmount,
+        retained31Days: currentMonthRetained31Days,
+        customerList: currentMonthCustomers
+      }
+    };
+  };
+
+  // 전체 통계 계산
+  const overallStats = useMemo(() => {
+    const allData = referralCodes.map(calculateSettlementData);
+
+    return {
+      totalCustomers: allData.reduce((sum, data) => sum + data.total.customers,
+          0),
+      totalRevenue: allData.reduce((sum, data) => sum + data.total.revenue, 0),
+      totalPayback: allData.reduce((sum, data) => sum + data.total.payback, 0),
+      currentMonthCustomers: allData.reduce(
+          (sum, data) => sum + data.currentMonth.customers, 0),
+      currentMonthRevenue: allData.reduce(
+          (sum, data) => sum + data.currentMonth.revenue, 0),
+      currentMonthPayback: allData.reduce(
+          (sum, data) => sum + data.currentMonth.payback, 0),
+      totalOriginalPrice: allData.reduce(
+          (sum, data) => sum + data.total.originalPrice, 0),
+      totalDiscountAmount: allData.reduce(
+          (sum, data) => sum + data.total.discountAmount, 0),
+      currentMonthOriginalPrice: allData.reduce(
+          (sum, data) => sum + data.currentMonth.originalPrice, 0),
+      currentMonthDiscountAmount: allData.reduce(
+          (sum, data) => sum + data.currentMonth.discountAmount, 0)
+    };
+  }, []);
+
+  // CSV 다운로드 함수
+  const handleDownloadCSV = () => {
+    const csvData = referralCodes.map(referralCode => {
+      const data = calculateSettlementData(referralCode);
+      return {
+        이벤트명: referralCode.eventName || '이벤트 정보 없음',
+        레퍼럴코드: referralCode.code,
+        생성자명: referralCode.paybackInfo?.creatorName || '정보없음',
+        연락처: referralCode.paybackInfo?.contactPhone || '정보없음',
+        이메일: referralCode.paybackInfo?.contactEmail || '정보없음',
+        은행명: referralCode.paybackInfo?.bankName || '정보없음',
+        계좌번호: referralCode.paybackInfo?.accountNumber || '정보없음',
+        예금주: referralCode.paybackInfo?.accountHolder || '정보없음',
+        정산기간: `${data.periodStart.toLocaleDateString()} ~ ${data.periodEnd.toLocaleDateString()}`,
+        당월고객수: data.currentMonth.customers,
+        당월31일유지고객수: data.currentMonth.retained31Days,
+        당월매출: data.currentMonth.revenue,
+        당월지급금액: data.currentMonth.payback,
+        할인율: `${referralCode.discountRate}%`
+      };
+    });
+
+    const headers = Object.keys(csvData[0] || {});
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => headers.map(header => `"${row[header]}"`).join(','))
     ].join('\n');
 
-    const currentDate = new Date().toISOString().split('T')[0];
-    const filePrefix = showCompleted ? '정산완료' : '정산대기';
-    downloadFile(tsvContent, `레퍼럴_${filePrefix}_${currentDate}.xlsx`,
-        'application/vnd.ms-excel;charset=utf-8;');
+    const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `레퍼럴_정산_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
   };
-
-  const totalPayback = currentData.reduce(
-      (sum, item) => sum + item.paybackAmount, 0);
-  const totalRevenue = currentData.reduce(
-      (sum, item) => sum + item.totalRevenue, 0);
-  const totalCustomers = currentData.reduce(
-      (sum, item) => sum + item.totalCustomers, 0);
 
   return (
       <div style={{flex: 1, padding: '24px'}}>
@@ -87,7 +188,7 @@ const SettlementManagement = () => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '20px'
+            marginBottom: '24px'
           }}>
             <div>
               <h2 style={{
@@ -103,136 +204,60 @@ const SettlementManagement = () => {
                 color: '#64748b',
                 margin: 0
               }}>
-                {showCompleted ? '정산 완료된' : '정산 대기 중인'} 레퍼럴 코드 데이터를 관리합니다
+                레퍼럴 코드별 정산 현황을 관리하고 당월 페이백을 계산합니다
               </p>
             </div>
-            <div style={{display: 'flex', gap: '12px'}}>
-              <button
-                  onClick={() => setShowCompleted(!showCompleted)}
-                  style={{
-                    padding: '12px 20px',
-                    backgroundColor: showCompleted ? '#6b7280' : '#8b5cf6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = showCompleted ? '#4b5563'
-                        : '#7c3aed';
-                    e.target.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = showCompleted ? '#6b7280'
-                        : '#8b5cf6';
-                    e.target.style.transform = 'translateY(0)';
-                  }}
-              >
-                {showCompleted ? <FiEyeOff size={16}/> : <FiEye size={16}/>}
-                {showCompleted ? '정산대기 보기' : '정산완료 보기'}
-              </button>
-              <button
-                  onClick={handleDownloadCSV}
-                  style={{
-                    padding: '12px 20px',
-                    backgroundColor: '#16a34a',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 4px 12px rgba(22,163,74,0.3)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#15803d';
-                    e.target.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = '#16a34a';
-                    e.target.style.transform = 'translateY(0)';
-                  }}
-              >
-                <FiDownload size={16}/>
-                CSV 다운로드
-              </button>
-              <button
-                  onClick={handleDownloadExcel}
-                  style={{
-                    padding: '12px 20px',
-                    backgroundColor: '#0ea5e9',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 4px 12px rgba(14,165,233,0.3)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#0284c7';
-                    e.target.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = '#0ea5e9';
-                    e.target.style.transform = 'translateY(0)';
-                  }}
-              >
-                <FiFileText size={16}/>
-                엑셀 다운로드
-              </button>
-            </div>
+
+            <button
+                onClick={handleDownloadCSV}
+                style={{
+                  padding: '12px 20px',
+                  backgroundColor: '#16a34a',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.3s ease'
+                }}
+            >
+              <FiDownload size={16}/>
+              정산 데이터 다운로드
+            </button>
           </div>
 
-          {/* 통계 요약 */}
+          {/* 전체 통계 요약 */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '16px'
           }}>
-            <div style={{
-              padding: '16px',
-              backgroundColor: '#f0f9ff',
-              borderRadius: '12px',
-              border: '1px solid #e0f2fe'
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-              }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  backgroundColor: '#0ea5e9',
-                  borderRadius: '10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <FiUsers size={20} style={{color: 'white'}}/>
-                </div>
+            {/* 총 고객 수 */}
+            <div
+                style={{
+                  padding: '16px',
+                  backgroundColor: '#f0f9ff',
+                  borderRadius: '12px',
+                  border: '1px solid #e0f2fe',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={() => setHoveredCard('totalCustomers')}
+                onMouseLeave={() => setHoveredCard(null)}
+            >
+              <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                <FiUsers size={20} style={{color: '#0ea5e9'}}/>
                 <div>
                   <div style={{
                     fontSize: '20px',
                     fontWeight: '700',
                     color: '#0c4a6e'
                   }}>
-                    {totalCustomers}명
+                    {overallStats.totalCustomers}명
                   </div>
                   <div style={{
                     fontSize: '12px',
@@ -245,76 +270,86 @@ const SettlementManagement = () => {
               </div>
             </div>
 
-            <div style={{
-              padding: '16px',
-              backgroundColor: '#f0fdf4',
-              borderRadius: '12px',
-              border: '1px solid #dcfce7'
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-              }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  backgroundColor: '#16a34a',
-                  borderRadius: '10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <FiDollarSign size={20} style={{color: 'white'}}/>
-                </div>
+            {/* 총 매출 */}
+            <div
+                style={{
+                  padding: '16px',
+                  backgroundColor: '#f0fdf4',
+                  borderRadius: '12px',
+                  border: '1px solid #dcfce7',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  position: 'relative'
+                }}
+                onMouseEnter={() => setHoveredCard('totalRevenue')}
+                onMouseLeave={() => setHoveredCard(null)}
+            >
+              <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                <FiDollarSign size={20} style={{color: '#16a34a'}}/>
                 <div>
                   <div style={{
                     fontSize: '20px',
                     fontWeight: '700',
                     color: '#14532d'
                   }}>
-                    ₩{totalRevenue.toLocaleString()}
+                    ₩{overallStats.totalRevenue.toLocaleString()}
                   </div>
                   <div style={{
                     fontSize: '12px',
                     fontWeight: '500',
                     color: '#15803d'
                   }}>
-                    총 매출
+                    총 매출 (실결제)
                   </div>
                 </div>
               </div>
+
+              {/* 호버 시 할인 정보 표시 */}
+              {hoveredCard === 'totalRevenue' && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: '0',
+                    right: '0',
+                    backgroundColor: 'white',
+                    border: '1px solid #dcfce7',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                    zIndex: 10,
+                    marginTop: '4px'
+                  }}>
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#64748b',
+                      marginBottom: '4px'
+                    }}>
+                      원가 총액: ₩{overallStats.totalOriginalPrice.toLocaleString()}
+                    </div>
+                    <div style={{fontSize: '12px', color: '#dc2626'}}>
+                      총 할인액:
+                      ₩{overallStats.totalDiscountAmount.toLocaleString()}
+                    </div>
+                  </div>
+              )}
             </div>
 
+            {/* 총 페이백 */}
             <div style={{
               padding: '16px',
               backgroundColor: '#fefbf3',
               borderRadius: '12px',
               border: '1px solid #fde68a'
             }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-              }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  backgroundColor: '#d97706',
-                  borderRadius: '10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <FiDollarSign size={20} style={{color: 'white'}}/>
-                </div>
+              <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                <FiTrendingUp size={20} style={{color: '#d97706'}}/>
                 <div>
                   <div style={{
                     fontSize: '20px',
                     fontWeight: '700',
                     color: '#92400e'
                   }}>
-                    ₩{totalPayback.toLocaleString()}
+                    ₩{overallStats.totalPayback.toLocaleString()}
                   </div>
                   <div style={{
                     fontSize: '12px',
@@ -326,10 +361,130 @@ const SettlementManagement = () => {
                 </div>
               </div>
             </div>
+
+            {/* 당월 고객 수 */}
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#f3f4f6',
+              borderRadius: '12px',
+              border: '1px solid #d1d5db'
+            }}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                <FiCalendar size={20} style={{color: '#6b7280'}}/>
+                <div>
+                  <div style={{
+                    fontSize: '20px',
+                    fontWeight: '700',
+                    color: '#374151'
+                  }}>
+                    {overallStats.currentMonthCustomers}명
+                  </div>
+                  <div style={{
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    color: '#6b7280'
+                  }}>
+                    당월 고객 수
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 당월 매출 */}
+            <div
+                style={{
+                  padding: '16px',
+                  backgroundColor: '#f0f9ff',
+                  borderRadius: '12px',
+                  border: '1px solid #e0f2fe',
+                  cursor: 'pointer',
+                  position: 'relative'
+                }}
+                onMouseEnter={() => setHoveredCard('currentRevenue')}
+                onMouseLeave={() => setHoveredCard(null)}
+            >
+              <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                <FiDollarSign size={20} style={{color: '#0ea5e9'}}/>
+                <div>
+                  <div style={{
+                    fontSize: '20px',
+                    fontWeight: '700',
+                    color: '#0c4a6e'
+                  }}>
+                    ₩{overallStats.currentMonthRevenue.toLocaleString()}
+                  </div>
+                  <div style={{
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    color: '#0369a1'
+                  }}>
+                    당월 매출
+                  </div>
+                </div>
+              </div>
+
+              {/* 호버 시 할인 정보 표시 */}
+              {hoveredCard === 'currentRevenue' && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: '0',
+                    right: '0',
+                    backgroundColor: 'white',
+                    border: '1px solid #e0f2fe',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                    zIndex: 10,
+                    marginTop: '4px'
+                  }}>
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#64748b',
+                      marginBottom: '4px'
+                    }}>
+                      당월 원가:
+                      ₩{overallStats.currentMonthOriginalPrice.toLocaleString()}
+                    </div>
+                    <div style={{fontSize: '12px', color: '#dc2626'}}>
+                      당월 할인액:
+                      ₩{overallStats.currentMonthDiscountAmount.toLocaleString()}
+                    </div>
+                  </div>
+              )}
+            </div>
+
+            {/* 당월 페이백 */}
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#fdf2f8',
+              borderRadius: '12px',
+              border: '1px solid #fce7f3'
+            }}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                <FiTrendingUp size={20} style={{color: '#ec4899'}}/>
+                <div>
+                  <div style={{
+                    fontSize: '20px',
+                    fontWeight: '700',
+                    color: '#831843'
+                  }}>
+                    ₩{overallStats.currentMonthPayback.toLocaleString()}
+                  </div>
+                  <div style={{
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    color: '#be185d'
+                  }}>
+                    당월 페이백
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* 정산 데이터 테이블 */}
+        {/* 레퍼럴 코드별 상세 정보 */}
         <div style={{
           backgroundColor: 'white',
           borderRadius: '16px',
@@ -348,264 +503,251 @@ const SettlementManagement = () => {
               fontWeight: '600',
               color: '#374151'
             }}>
-              {showCompleted ? '정산 완료' : '정산 대기'} 데이터 ({currentData.length}개 항목)
+              레퍼럴 코드별 정산 현황 ({referralCodes.length}개)
             </h3>
           </div>
 
-          <div style={{
-            overflowX: 'auto',
-            maxHeight: '600px',
-            overflowY: 'auto'
-          }}>
-            <table style={{
-              width: '100%',
-              borderCollapse: 'collapse'
-            }}>
-              <thead style={{
-                backgroundColor: '#f8fafc',
-                position: 'sticky',
-                top: 0,
-                zIndex: 1
-              }}>
-              <tr>
-                <th style={{
-                  padding: '12px 16px',
-                  textAlign: 'left',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: '#374151',
-                  borderBottom: '1px solid #e2e8f0',
-                  minWidth: '150px'
-                }}>이벤트 이름
-                </th>
-                <th style={{
-                  padding: '12px 16px',
-                  textAlign: 'left',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: '#374151',
-                  borderBottom: '1px solid #e2e8f0',
-                  minWidth: '120px'
-                }}>레퍼럴 코드
-                </th>
-                <th style={{
-                  padding: '12px 16px',
-                  textAlign: 'left',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: '#374151',
-                  borderBottom: '1px solid #e2e8f0',
-                  minWidth: '180px'
-                }}>생성자 정보
-                </th>
-                <th style={{
-                  padding: '12px 16px',
-                  textAlign: 'left',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: '#374151',
-                  borderBottom: '1px solid #e2e8f0',
-                  minWidth: '200px'
-                }}>고객 전화번호
-                </th>
-                <th style={{
-                  padding: '12px 16px',
-                  textAlign: 'center',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: '#374151',
-                  borderBottom: '1px solid #e2e8f0',
-                  minWidth: '80px'
-                }}>고객수
-                </th>
-                <th style={{
-                  padding: '12px 16px',
-                  textAlign: 'right',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: '#374151',
-                  borderBottom: '1px solid #e2e8f0',
-                  minWidth: '120px'
-                }}>총 매출
-                </th>
-                <th style={{
-                  padding: '12px 16px',
-                  textAlign: 'right',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: '#374151',
-                  borderBottom: '1px solid #e2e8f0',
-                  minWidth: '120px'
-                }}>페이백 금액
-                </th>
-                {showCompleted && (
-                    <th style={{
-                      padding: '12px 16px',
-                      textAlign: 'center',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      color: '#374151',
-                      borderBottom: '1px solid #e2e8f0',
-                      minWidth: '100px'
-                    }}>정산일</th>
-                )}
-              </tr>
-              </thead>
-              <tbody>
-              {currentData.map((item, index) => (
-                  <tr key={index} style={{
-                    borderBottom: index < currentData.length - 1
-                        ? '1px solid #f1f5f9' : 'none'
+          {referralCodes.map((referralCode, index) => {
+            const settlementData = calculateSettlementData(referralCode);
+            const eventName = referralCode.eventName || '이벤트 정보 없음';
+
+            return (
+                <div
+                    key={referralCode.id}
+                    style={{
+                      padding: '24px',
+                      borderBottom: index < referralCodes.length - 1
+                          ? '1px solid #f1f5f9' : 'none'
+                    }}
+                >
+                  {/* 레퍼럴 코드 헤더 */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    marginBottom: '20px'
                   }}>
-                    <td style={{
-                      padding: '16px',
-                      fontSize: '14px',
-                      color: '#1f2937',
-                      fontWeight: '500'
-                    }}>
-                      {item.eventName}
-                    </td>
-                    <td style={{
-                      padding: '16px',
-                      fontSize: '13px',
-                      color: '#1f2937',
-                      fontFamily: 'monospace',
-                      backgroundColor: '#f8fafc'
-                    }}>
-                      {item.referralCode}
-                    </td>
-                    <td style={{
-                      padding: '16px',
-                      fontSize: '13px',
-                      color: '#1f2937'
-                    }}>
-                      <div style={{
-                        fontSize: '13px',
-                        fontWeight: '500',
+                    <div style={{flex: 1}}>
+                      <h4 style={{
+                        fontSize: '16px',
+                        fontWeight: '600',
                         color: '#1f2937',
-                        marginBottom: '4px'
+                        margin: '0 0 8px 0'
                       }}>
-                        {item.creatorName}
-                      </div>
+                        {eventName}
+                      </h4>
                       <div style={{
-                        fontSize: '12px',
+                        display: 'flex',
+                        gap: '16px',
+                        fontSize: '14px',
                         color: '#64748b',
-                        marginBottom: '2px'
+                        marginBottom: '8px'
                       }}>
-                        {item.creatorTitle}
-                      </div>
-                      <div style={{
-                        fontSize: '12px',
-                        color: '#64748b',
-                        fontFamily: 'monospace'
-                      }}>
-                        {item.creatorPhone}
-                      </div>
-                    </td>
-                    <td style={{
-                      padding: '16px',
-                      fontSize: '12px',
-                      color: '#64748b',
-                      fontFamily: 'monospace',
-                      maxWidth: '200px',
-                      wordBreak: 'break-all'
+                    <span>코드: <code style={{
+                      backgroundColor: '#f1f5f9',
+                      padding: '2px 6px',
+                      borderRadius: '4px'
                     }}>
-                      {item.customerPhones}
-                    </td>
-                    <td style={{
-                      padding: '16px',
-                      fontSize: '16px',
-                      color: '#1f2937',
-                      fontWeight: '600',
+                      {referralCode.code}
+                    </code></span>
+                        <span>생성자: {referralCode.paybackInfo?.creatorName
+                            || '정보없음'}</span>
+                        <span>할인율: {referralCode.discountRate}%</span>
+                      </div>
+                      <div style={{fontSize: '12px', color: '#64748b'}}>
+                        정산
+                        기간: {settlementData.periodStart.toLocaleDateString()} ~ {settlementData.periodEnd.toLocaleDateString()}
+                      </div>
+                    </div>
+
+                    <div style={{
+                      padding: '8px 12px',
+                      backgroundColor: '#f0fdf4',
+                      borderRadius: '8px',
+                      border: '1px solid #dcfce7'
+                    }}>
+                      <div style={{
+                        fontSize: '12px',
+                        color: '#15803d',
+                        fontWeight: '500'
+                      }}>
+                        당월 지급 예정
+                      </div>
+                      <div style={{
+                        fontSize: '18px',
+                        fontWeight: '700',
+                        color: '#14532d'
+                      }}>
+                        ₩{settlementData.currentMonth.payback.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 통계 그리드 */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                    gap: '12px',
+                    marginBottom: '20px'
+                  }}>
+                    <div style={{
+                      padding: '12px',
+                      backgroundColor: '#f8fafc',
+                      borderRadius: '8px',
                       textAlign: 'center'
                     }}>
-                      {item.totalCustomers}
-                    </td>
-                    <td style={{
-                      padding: '16px',
-                      fontSize: '14px',
-                      color: '#16a34a',
-                      fontWeight: '600',
-                      textAlign: 'right'
-                    }}>
-                      ₩{item.totalRevenue.toLocaleString()}
-                    </td>
-                    <td style={{
-                      padding: '16px',
-                      fontSize: '14px',
-                      color: showCompleted ? '#16a34a' : '#d97706',
-                      fontWeight: '600',
-                      textAlign: 'right'
-                    }}>
-                      ₩{item.paybackAmount.toLocaleString()}
-                      {showCompleted && (
-                          <div style={{
-                            fontSize: '11px',
-                            color: '#16a34a',
-                            marginTop: '2px'
-                          }}>
-                            ✓ 완료
-                          </div>
-                      )}
-                    </td>
-                    {showCompleted && (
-                        <td style={{
-                          padding: '16px',
-                          fontSize: '13px',
-                          color: '#64748b',
-                          textAlign: 'center'
-                        }}>
-                          {item.settledDate || '2025-07-31'}
-                        </td>
-                    )}
-                  </tr>
-              ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                      <div style={{
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: '#1f2937'
+                      }}>
+                        {settlementData.total.customers}
+                      </div>
+                      <div style={{fontSize: '11px', color: '#64748b'}}>총 고객
+                      </div>
+                    </div>
 
-        {currentData.length === 0 && (
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '16px',
-              padding: '60px',
-              textAlign: 'center',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-              border: '1px solid #e2e8f0'
-            }}>
-              <div style={{
-                width: '80px',
-                height: '80px',
-                backgroundColor: '#f0f9ff',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 24px auto'
-              }}>
-                <FiFileText size={32} style={{color: '#0ea5e9'}}/>
-              </div>
-              <h3 style={{
-                fontSize: '20px',
-                fontWeight: '600',
-                color: '#374151',
-                margin: '0 0 12px 0'
-              }}>
-                {showCompleted ? '정산 완료된 데이터가 없습니다' : '정산할 데이터가 없습니다'}
-              </h3>
-              <p style={{
-                fontSize: '14px',
-                color: '#64748b',
-                margin: 0
-              }}>
-                {showCompleted
-                    ? '아직 정산 완료된 레퍼럴 코드가 없습니다.'
-                    : '레퍼럴 코드를 사용한 고객이 있을 때 정산 데이터가 생성됩니다.'
-                }
-              </p>
-            </div>
-        )}
+                    <div style={{
+                      padding: '12px',
+                      backgroundColor: '#f8fafc',
+                      borderRadius: '8px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: '#16a34a'
+                      }}>
+                        ₩{Math.round(settlementData.total.revenue / 1000)}K
+                      </div>
+                      <div style={{fontSize: '11px', color: '#64748b'}}>총 매출
+                      </div>
+                    </div>
+
+                    <div style={{
+                      padding: '12px',
+                      backgroundColor: '#f8fafc',
+                      borderRadius: '8px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: '#d97706'
+                      }}>
+                        ₩{Math.round(settlementData.total.payback / 1000)}K
+                      </div>
+                      <div style={{fontSize: '11px', color: '#64748b'}}>총 페이백
+                      </div>
+                    </div>
+
+                    <div style={{
+                      padding: '12px',
+                      backgroundColor: '#f0f9ff',
+                      borderRadius: '8px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: '#0369a1'
+                      }}>
+                        {settlementData.currentMonth.customers}
+                      </div>
+                      <div style={{fontSize: '11px', color: '#64748b'}}>당월 고객
+                      </div>
+                    </div>
+
+                    <div style={{
+                      padding: '12px',
+                      backgroundColor: '#f0f9ff',
+                      borderRadius: '8px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: '#0369a1'
+                      }}>
+                        ₩{Math.round(
+                          settlementData.currentMonth.revenue / 1000)}K
+                      </div>
+                      <div style={{fontSize: '11px', color: '#64748b'}}>당월 매출
+                      </div>
+                    </div>
+
+                    <div style={{
+                      padding: '12px',
+                      backgroundColor: '#f0f9ff',
+                      borderRadius: '8px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: '#ec4899'
+                      }}>
+                        ₩{Math.round(
+                          settlementData.currentMonth.payback / 1000)}K
+                      </div>
+                      <div style={{fontSize: '11px', color: '#64748b'}}>당월 페이백
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 생성자 정보 */}
+                  <div style={{
+                    padding: '16px',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <h5 style={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#374151',
+                      margin: '0 0 12px 0'
+                    }}>
+                      생성자 정보 & 지급 계좌
+                    </h5>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                      gap: '12px',
+                      fontSize: '13px'
+                    }}>
+                      <div>
+                        <span style={{color: '#64748b'}}>이름: </span>
+                        <span style={{color: '#1f2937', fontWeight: '500'}}>
+                      {referralCode.paybackInfo?.creatorName || '정보없음'}
+                    </span>
+                      </div>
+                      <div>
+                        <span style={{color: '#64748b'}}>연락처: </span>
+                        <span style={{color: '#1f2937', fontWeight: '500'}}>
+                      {referralCode.paybackInfo?.contactPhone || '정보없음'}
+                    </span>
+                      </div>
+                      <div>
+                        <span style={{color: '#64748b'}}>이메일: </span>
+                        <span style={{color: '#1f2937', fontWeight: '500'}}>
+                      {referralCode.paybackInfo?.contactEmail || '정보없음'}
+                    </span>
+                      </div>
+                      <div>
+                        <span style={{color: '#64748b'}}>계좌: </span>
+                        <span style={{color: '#1f2937', fontWeight: '500'}}>
+                      {referralCode.paybackInfo?.bankName
+                          || '정보없음'} {referralCode.paybackInfo?.accountNumber
+                            || '정보없음'}
+                    </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            );
+          })}
+        </div>
       </div>
   );
 };
