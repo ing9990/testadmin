@@ -53,27 +53,41 @@ export const referralCodes = [
     endDate: '2025-12-31',
     revenue: 1150000,
     retentionRate: 78, // 한달 이상 유지율
+    // 정산 정보
+    paybackInfo: {
+      creatorName: '신상원',
+      contactPhone: '010-1234-5678',
+      contactEmail: 'sinusangwon@example.com',
+      bankName: '국민은행',
+      accountNumber: '123-456-789012',
+      accountHolder: '신상원',
+      paybackRate: 50000, // 인당 5만원
+      totalPayback: 1150000 // 23명 * 50000원
+    },
     customers: [
       {
         id: 1,
         name: '김**',
         joinDate: '2025-06-02',
         retained: true,
-        revenue: 50000
+        revenue: 50000,
+        paybackDue: 50000
       },
       {
         id: 2,
         name: '이**',
         joinDate: '2025-06-03',
         retained: true,
-        revenue: 50000
+        revenue: 50000,
+        paybackDue: 50000
       },
       {
         id: 3,
         name: '박**',
         joinDate: '2025-06-05',
         retained: false,
-        revenue: 50000
+        revenue: 50000,
+        paybackDue: 50000
       },
     ]
   },
@@ -90,20 +104,32 @@ export const referralCodes = [
     endDate: '2025-12-31',
     revenue: 750000,
     retentionRate: 86,
+    paybackInfo: {
+      creatorName: '신상원',
+      contactPhone: '010-1234-5678',
+      contactEmail: 'sinusangwon@example.com',
+      bankName: '국민은행',
+      accountNumber: '123-456-789012',
+      accountHolder: '신상원',
+      paybackRate: 50000,
+      totalPayback: 750000 // 15명 * 50000원
+    },
     customers: [
       {
         id: 4,
         name: '최**',
         joinDate: '2025-06-06',
         retained: true,
-        revenue: 50000
+        revenue: 50000,
+        paybackDue: 50000
       },
       {
         id: 5,
         name: '정**',
         joinDate: '2025-06-07',
         retained: true,
-        revenue: 50000
+        revenue: 50000,
+        paybackDue: 50000
       },
     ]
   },
@@ -120,13 +146,24 @@ export const referralCodes = [
     endDate: '2025-12-31',
     revenue: 350000,
     retentionRate: 71,
+    paybackInfo: {
+      creatorName: '신상원',
+      contactPhone: '010-1234-5678',
+      contactEmail: 'sinusangwon@example.com',
+      bankName: '국민은행',
+      accountNumber: '123-456-789012',
+      accountHolder: '신상원',
+      paybackRate: 50000,
+      totalPayback: 350000 // 7명 * 50000원
+    },
     customers: [
       {
         id: 6,
         name: '강**',
         joinDate: '2025-06-11',
         retained: true,
-        revenue: 50000
+        revenue: 50000,
+        paybackDue: 50000
       },
     ]
   },
@@ -143,6 +180,16 @@ export const referralCodes = [
     endDate: '2025-11-30',
     revenue: 900000,
     retentionRate: 83,
+    paybackInfo: {
+      creatorName: '이종혁',
+      contactPhone: '010-2345-6789',
+      contactEmail: 'jonghyuk@example.com',
+      bankName: '신한은행',
+      accountNumber: '234-567-890123',
+      accountHolder: '이종혁',
+      paybackRate: 50000,
+      totalPayback: 900000 // 18명 * 50000원
+    },
     customers: []
   },
   {
@@ -158,6 +205,16 @@ export const referralCodes = [
     endDate: '2025-11-30',
     revenue: 500000,
     retentionRate: 90,
+    paybackInfo: {
+      creatorName: '이종혁',
+      contactPhone: '010-2345-6789',
+      contactEmail: 'jonghyuk@example.com',
+      bankName: '신한은행',
+      accountNumber: '234-567-890123',
+      accountHolder: '이종혁',
+      paybackRate: 50000,
+      totalPayback: 500000 // 10명 * 50000원
+    },
     customers: []
   }
 ];

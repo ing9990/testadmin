@@ -89,6 +89,194 @@ const ReferralDetail = ({referral, onBack}) => {
             <FiStopCircle size={28} style={{color: '#dc2626'}}/>
           </div>
 
+          {/* 정산 정보 카드 */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: '24px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+            border: '1px solid #e2e8f0',
+            marginBottom: '24px'
+          }}>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#374151',
+              margin: '0 0 20px 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              💰 정산 정보
+            </h3>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '24px',
+              marginBottom: '24px'
+            }}>
+              <div>
+                <h4 style={{
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  margin: '0 0 12px 0'
+                }}>
+                  생성자 정보
+                </h4>
+                <div style={{space: '8px'}}>
+                  <div style={{
+                    padding: '8px 12px',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '8px',
+                    marginBottom: '8px'
+                  }}>
+                    <span style={{fontSize: '12px', color: '#64748b'}}>이름</span>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#1f2937'
+                    }}>
+                      {referral.paybackInfo?.creatorName || '정보 없음'}
+                    </div>
+                  </div>
+                  <div style={{
+                    padding: '8px 12px',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '8px',
+                    marginBottom: '8px'
+                  }}>
+                    <span
+                        style={{fontSize: '12px', color: '#64748b'}}>연락처</span>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#1f2937'
+                    }}>
+                      {referral.paybackInfo?.contactPhone || '정보 없음'}
+                    </div>
+                  </div>
+                  <div style={{
+                    padding: '8px 12px',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '8px'
+                  }}>
+                    <span
+                        style={{fontSize: '12px', color: '#64748b'}}>이메일</span>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#1f2937'
+                    }}>
+                      {referral.paybackInfo?.contactEmail || '정보 없음'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 style={{
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  margin: '0 0 12px 0'
+                }}>
+                  계좌 정보
+                </h4>
+                <div style={{space: '8px'}}>
+                  <div style={{
+                    padding: '8px 12px',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '8px',
+                    marginBottom: '8px'
+                  }}>
+                    <span style={{fontSize: '12px', color: '#64748b'}}>은행</span>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#1f2937'
+                    }}>
+                      {referral.paybackInfo?.bankName || '정보 없음'}
+                    </div>
+                  </div>
+                  <div style={{
+                    padding: '8px 12px',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '8px',
+                    marginBottom: '8px'
+                  }}>
+                    <span
+                        style={{fontSize: '12px', color: '#64748b'}}>계좌번호</span>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#1f2937',
+                      fontFamily: 'monospace'
+                    }}>
+                      {referral.paybackInfo?.accountNumber || '정보 없음'}
+                    </div>
+                  </div>
+                  <div style={{
+                    padding: '8px 12px',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '8px'
+                  }}>
+                    <span
+                        style={{fontSize: '12px', color: '#64748b'}}>예금주</span>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#1f2937'
+                    }}>
+                      {referral.paybackInfo?.accountHolder || '정보 없음'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 페이백 계산 */}
+            <div style={{
+              padding: '20px',
+              backgroundColor: '#f0fdf4',
+              borderRadius: '12px',
+              border: '1px solid #dcfce7'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '12px'
+              }}>
+              <span style={{
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#15803d'
+              }}>
+                페이백 계산
+              </span>
+                <span style={{
+                  fontSize: '24px',
+                  fontWeight: '700',
+                  color: '#14532d'
+                }}>
+                ₩{(referral.customers.length * 50000).toLocaleString()}
+              </span>
+              </div>
+              <div style={{
+                fontSize: '12px',
+                color: '#16a34a',
+                lineHeight: '1.4'
+              }}>
+                • 신규 가입자: {referral.customers.length}명<br/>
+                • 인당 페이백: ₩50,000<br/>
+                • 계산: {referral.customers.length} × ₩50,000 =
+                ₩{(referral.customers.length * 50000).toLocaleString()}
+              </div>
+            </div>
+          </div>
+
           <h2 style={{
             fontSize: '20px',
             fontWeight: '600',
@@ -914,9 +1102,20 @@ const ReferralDetail = ({referral, onBack}) => {
                         <div style={{
                           fontSize: '12px',
                           color: customer.retained ? '#16a34a' : '#dc2626',
-                          fontWeight: '500'
+                          fontWeight: '500',
+                          marginBottom: '4px'
                         }}>
                           {customer.retained ? '유지' : '이탈'}
+                        </div>
+                        <div style={{
+                          fontSize: '11px',
+                          color: '#0ea5e9',
+                          fontWeight: '500',
+                          backgroundColor: '#f0f9ff',
+                          padding: '2px 6px',
+                          borderRadius: '4px'
+                        }}>
+                          페이백: ₩50,000
                         </div>
                       </div>
                     </div>

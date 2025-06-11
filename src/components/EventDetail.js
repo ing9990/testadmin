@@ -26,17 +26,47 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
     code: '',
     discountRate: '',
     discountType: 'percentage',
-    maxUses: ''
+    maxUses: '',
+    // 정산 정보
+    creatorName: '',
+    contactPhone: '',
+    contactEmail: '',
+    bankName: '',
+    accountNumber: '',
+    accountHolder: ''
   });
 
   const eventReferralCodes = referralCodes.filter(
       code => code.eventId === event.id);
 
   const handleCreateReferral = () => {
-    console.log('새 레퍼럴 코드 생성:', newReferral);
+    const referralWithPayback = {
+      ...newReferral,
+      paybackInfo: {
+        creatorName: newReferral.creatorName,
+        contactPhone: newReferral.contactPhone,
+        contactEmail: newReferral.contactEmail,
+        bankName: newReferral.bankName,
+        accountNumber: newReferral.accountNumber,
+        accountHolder: newReferral.accountHolder,
+        paybackRate: 50000, // 인당 5만원 고정
+        totalPayback: 0 // 초기값 0
+      }
+    };
+    console.log('새 레퍼럴 코드 생성:', referralWithPayback);
     setShowCreateModal(false);
-    setNewReferral(
-        {code: '', discountRate: '', discountType: 'percentage', maxUses: ''});
+    setNewReferral({
+      code: '',
+      discountRate: '',
+      discountType: 'percentage',
+      maxUses: '',
+      creatorName: '',
+      contactPhone: '',
+      contactEmail: '',
+      bankName: '',
+      accountNumber: '',
+      accountHolder: ''
+    });
   };
 
   const handleCopyCode = (code) => {
@@ -282,6 +312,261 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
             />
           </div>
 
+          {/* 정산 정보 섹션 */}
+          <div style={{
+            padding: '20px',
+            backgroundColor: '#f0f9ff',
+            borderRadius: '12px',
+            border: '1px solid #e0f2fe',
+            marginBottom: '24px'
+          }}>
+            <h3 style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#0c4a6e',
+              margin: '0 0 16px 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              💰 정산 정보 (인당 5만원 페이백)
+            </h3>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '16px',
+              marginBottom: '16px'
+            }}>
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: '#0369a1',
+                  marginBottom: '6px'
+                }}>
+                  생성자 이름 *
+                </label>
+                <input
+                    type="text"
+                    value={newReferral.creatorName}
+                    onChange={(e) => setNewReferral(
+                        {...newReferral, creatorName: e.target.value})}
+                    placeholder="홍길동"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '2px solid #bae6fd',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      outline: 'none',
+                      transition: 'border-color 0.3s ease',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0ea5e9'}
+                    onBlur={(e) => e.target.style.borderColor = '#bae6fd'}
+                />
+              </div>
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: '#0369a1',
+                  marginBottom: '6px'
+                }}>
+                  연락처 *
+                </label>
+                <input
+                    type="tel"
+                    value={newReferral.contactPhone}
+                    onChange={(e) => setNewReferral(
+                        {...newReferral, contactPhone: e.target.value})}
+                    placeholder="010-1234-5678"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '2px solid #bae6fd',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      outline: 'none',
+                      transition: 'border-color 0.3s ease',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0ea5e9'}
+                    onBlur={(e) => e.target.style.borderColor = '#bae6fd'}
+                />
+              </div>
+            </div>
+
+            <div style={{marginBottom: '16px'}}>
+              <label style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: '600',
+                color: '#0369a1',
+                marginBottom: '6px'
+              }}>
+                이메일
+              </label>
+              <input
+                  type="email"
+                  value={newReferral.contactEmail}
+                  onChange={(e) => setNewReferral(
+                      {...newReferral, contactEmail: e.target.value})}
+                  placeholder="example@email.com"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '2px solid #bae6fd',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    outline: 'none',
+                    transition: 'border-color 0.3s ease',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#0ea5e9'}
+                  onBlur={(e) => e.target.style.borderColor = '#bae6fd'}
+              />
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 2fr',
+              gap: '16px',
+              marginBottom: '16px'
+            }}>
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: '#0369a1',
+                  marginBottom: '6px'
+                }}>
+                  은행명 *
+                </label>
+                <select
+                    value={newReferral.bankName}
+                    onChange={(e) => setNewReferral(
+                        {...newReferral, bankName: e.target.value})}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '2px solid #bae6fd',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      outline: 'none',
+                      transition: 'border-color 0.3s ease',
+                      boxSizing: 'border-box',
+                      backgroundColor: 'white'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0ea5e9'}
+                    onBlur={(e) => e.target.style.borderColor = '#bae6fd'}
+                >
+                  <option value="">선택</option>
+                  <option value="국민은행">국민은행</option>
+                  <option value="신한은행">신한은행</option>
+                  <option value="우리은행">우리은행</option>
+                  <option value="하나은행">하나은행</option>
+                  <option value="기업은행">기업은행</option>
+                  <option value="농협은행">농협은행</option>
+                  <option value="카카오뱅크">카카오뱅크</option>
+                  <option value="토스뱅크">토스뱅크</option>
+                </select>
+              </div>
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: '#0369a1',
+                  marginBottom: '6px'
+                }}>
+                  계좌번호 *
+                </label>
+                <input
+                    type="text"
+                    value={newReferral.accountNumber}
+                    onChange={(e) => setNewReferral(
+                        {...newReferral, accountNumber: e.target.value})}
+                    placeholder="123-456-789012"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '2px solid #bae6fd',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      outline: 'none',
+                      transition: 'border-color 0.3s ease',
+                      boxSizing: 'border-box',
+                      fontFamily: 'monospace'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0ea5e9'}
+                    onBlur={(e) => e.target.style.borderColor = '#bae6fd'}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: '600',
+                color: '#0369a1',
+                marginBottom: '6px'
+              }}>
+                예금주명 *
+              </label>
+              <input
+                  type="text"
+                  value={newReferral.accountHolder}
+                  onChange={(e) => setNewReferral(
+                      {...newReferral, accountHolder: e.target.value})}
+                  placeholder="홍길동 (실명과 일치해야 함)"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '2px solid #bae6fd',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    outline: 'none',
+                    transition: 'border-color 0.3s ease',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#0ea5e9'}
+                  onBlur={(e) => e.target.style.borderColor = '#bae6fd'}
+              />
+            </div>
+
+            <div style={{
+              marginTop: '12px',
+              padding: '12px',
+              backgroundColor: '#dbeafe',
+              borderRadius: '8px',
+              border: '1px solid #93c5fd'
+            }}>
+              <div style={{
+                fontSize: '12px',
+                color: '#1e40af',
+                fontWeight: '500'
+              }}>
+                💡 페이백 정보
+              </div>
+              <div style={{
+                fontSize: '11px',
+                color: '#3730a3',
+                marginTop: '4px',
+                lineHeight: '1.4'
+              }}>
+                • 신규 가입자 1명당 5만원 지급<br/>
+                • 매월 말일 일괄 정산<br/>
+                • 세금 신고는 개별적으로 진행
+              </div>
+            </div>
+          </div>
+
           <div style={{display: 'flex', gap: '12px'}}>
             <button
                 onClick={() => setShowCreateModal(false)}
@@ -303,19 +588,30 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
             <button
                 onClick={handleCreateReferral}
                 disabled={!newReferral.code || !newReferral.discountRate
-                    || !newReferral.maxUses}
+                    || !newReferral.maxUses ||
+                    !newReferral.creatorName || !newReferral.contactPhone ||
+                    !newReferral.bankName || !newReferral.accountNumber
+                    || !newReferral.accountHolder}
                 style={{
                   flex: 1,
                   padding: '12px 20px',
-                  backgroundColor: newReferral.code && newReferral.discountRate
-                  && newReferral.maxUses ? '#16a34a' : '#d1d5db',
+                  backgroundColor: (newReferral.code && newReferral.discountRate
+                      && newReferral.maxUses &&
+                      newReferral.creatorName && newReferral.contactPhone &&
+                      newReferral.bankName && newReferral.accountNumber
+                      && newReferral.accountHolder)
+                      ? '#16a34a' : '#d1d5db',
                   color: 'white',
                   border: 'none',
                   borderRadius: '12px',
                   fontSize: '14px',
                   fontWeight: '500',
-                  cursor: newReferral.code && newReferral.discountRate
-                  && newReferral.maxUses ? 'pointer' : 'not-allowed',
+                  cursor: (newReferral.code && newReferral.discountRate
+                      && newReferral.maxUses &&
+                      newReferral.creatorName && newReferral.contactPhone &&
+                      newReferral.bankName && newReferral.accountNumber
+                      && newReferral.accountHolder)
+                      ? 'pointer' : 'not-allowed',
                   transition: 'all 0.3s ease'
                 }}
             >
