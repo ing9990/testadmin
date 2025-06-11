@@ -4,6 +4,7 @@ export const events = [
     id: 1,
     name: '신상원 네이버 밴드방 추천코드 이벤트',
     description: '신상원 전문가 네이버 밴드방 회원들을 위한 특별 할인 이벤트입니다.',
+    accessLink: 'https://band.us/@sinusangwon2025',
     status: 'active', // active, inactive, ended
     createdAt: '2025-06-01',
     endDate: '2025-12-31',
@@ -15,6 +16,7 @@ export const events = [
     id: 2,
     name: '이종혁 유튜브 구독자 이벤트',
     description: '이종혁 전문가 유튜브 구독자들을 위한 프로모션 이벤트입니다.',
+    accessLink: 'https://youtube.com/@jonghyuk_invest',
     status: 'active',
     createdAt: '2025-05-15',
     endDate: '2025-11-30',
@@ -26,6 +28,7 @@ export const events = [
     id: 3,
     name: '금산 카카오톡 오픈채팅 이벤트',
     description: '금산 전문가 카카오톡 오픈채팅방 회원 대상 이벤트입니다.',
+    accessLink: 'https://open.kakao.com/o/kumsan2025',
     status: 'ended',
     createdAt: '2025-04-01',
     endDate: '2025-05-31',
@@ -171,6 +174,98 @@ export const getEventStatusStyle = (status) => {
     default:
       return {bg: '#f3f4f6', color: '#4a5568', text: '알 수 없음'};
   }
+};
+
+// 레퍼럴 코드 자동 생성 함수
+export const generateReferralCode = (eventName, discountRate) => {
+  // 이벤트 이름에서 주요 키워드 추출
+  const extractKeywords = (name) => {
+    const keywords = [];
+
+    // 전문가 이름 추출
+    if (name.includes('신상원')) {
+      keywords.push('SINU');
+    } else if (name.includes('이종혁')) {
+      keywords.push('JONGHYUK');
+    } else if (name.includes('금산')) {
+      keywords.push('KUMSAN');
+    } else if (name.includes('김형일')) {
+      keywords.push('KIMHI');
+    } else if (name.includes('이관욱')) {
+      keywords.push('LEEGOW');
+    }
+
+    // 플랫폼/채널 추출
+    if (name.includes('네이버') || name.includes('밴드')) {
+      keywords.push('BAND');
+    } else if (name.includes('유튜브')) {
+      keywords.push('YOUTUBE');
+    } else if (name.includes('카카오')) {
+      keywords.push('KAKAO');
+    } else if (name.includes('인스타')) {
+      keywords.push('INSTA');
+    }
+
+    // 이벤트 타입 추출
+    if (name.includes('VIP') || name.includes('특별')) {
+      keywords.push('VIP');
+    } else if (name.includes('신규')) {
+      keywords.push('NEW');
+    } else if (name.includes('할인')) {
+      keywords.push('SALE');
+    }
+
+    return keywords;
+  };
+
+  const keywords = extractKeywords(eventName);
+  const year = new Date().getFullYear();
+  const randomNum = Math.floor(Math.random() * 99) + 1;
+
+  // 기본 코드 구조: [전문가]_[플랫폼]_[연도]_[할인율]_[랜덤숫자]
+  let code = '';
+
+  if (keywords.length >= 2) {
+    code = `${keywords[0]}_${keywords[1]}_${year}`;
+  } else if (keywords.length === 1) {
+    code = `${keywords[0]}_${year}`;
+  } else {
+    code = `EVENT_${year}`;
+  }
+
+  // 할인율이 있으면 추가
+  if (discountRate) {
+    code += `_${discountRate}`;
+  }
+
+  // 랜덤 숫자 추가 (중복 방지)
+  code += `_${randomNum.toString().padStart(2, '0')}`;
+
+  return code;
+};
+
+// 레퍼럴 코드 중복 체크 함수
+export const isReferralCodeUnique = (code) => {
+  return !referralCodes.some(referral => referral.code === code);
+};
+
+// 고유한 레퍼럴 코드 생성 함수 (중복 방지)
+export const generateUniqueReferralCode = (eventName, discountRate) => {
+  let attempts = 0;
+  let code;
+
+  do {
+    code = generateReferralCode(eventName, discountRate);
+    attempts++;
+  } while (!isReferralCodeUnique(code) && attempts < 10);
+
+  // 10번 시도해도 중복이면 타임스탬프 추가
+  if (attempts >= 10) {
+    const timestamp = Date.now().toString().slice(-4);
+    code = generateReferralCode(eventName, discountRate) + timestamp;
+  }
+
+  return code;
 };
 
 // 레퍼럴 코드 상태별 스타일

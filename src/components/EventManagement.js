@@ -15,6 +15,7 @@ const EventManagement = ({onEventSelect}) => {
   const [newEvent, setNewEvent] = useState({
     name: '',
     description: '',
+    accessLink: '',
     endDate: ''
   });
 
@@ -26,7 +27,7 @@ const EventManagement = ({onEventSelect}) => {
   const handleCreateEvent = () => {
     console.log('새 이벤트 생성:', newEvent);
     setShowCreateModal(false);
-    setNewEvent({name: '', description: '', endDate: ''});
+    setNewEvent({name: '', description: '', accessLink: '', endDate: ''});
   };
 
   const CreateEventModal = () => (
@@ -128,6 +129,37 @@ const EventManagement = ({onEventSelect}) => {
                   fontSize: '14px',
                   outline: 'none',
                   resize: 'vertical',
+                  transition: 'border-color 0.3s ease',
+                  boxSizing: 'border-box'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#4F46E5'}
+                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+            />
+          </div>
+
+          <div style={{marginBottom: '20px'}}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#374151',
+              marginBottom: '8px'
+            }}>
+              접속 링크
+            </label>
+            <input
+                type="url"
+                value={newEvent.accessLink}
+                onChange={(e) => setNewEvent(
+                    {...newEvent, accessLink: e.target.value})}
+                placeholder="https://band.us/@sinusangwon2025"
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: '2px solid #e2e8f0',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  outline: 'none',
                   transition: 'border-color 0.3s ease',
                   boxSizing: 'border-box'
                 }}

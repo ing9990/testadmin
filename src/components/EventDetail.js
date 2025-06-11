@@ -8,14 +8,20 @@ import {
   FiPercent,
   FiPlay,
   FiPlus,
+  FiRefreshCw,
   FiStopCircle,
   FiUsers
 } from 'react-icons/fi';
-import {getReferralStatusStyle, referralCodes} from '../data/promotionData';
+import {
+  generateUniqueReferralCode,
+  getReferralStatusStyle,
+  referralCodes
+} from '../data/promotionData';
 
 const EventDetail = ({event, onBack, onReferralSelect}) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [copiedCode, setCopiedCode] = useState(null);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [newReferral, setNewReferral] = useState({
     code: '',
     discountRate: '',
@@ -37,6 +43,23 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(event.accessLink);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const handleGenerateCode = () => {
+    if (newReferral.discountRate) {
+      const generatedCode = generateUniqueReferralCode(event.name,
+          newReferral.discountRate);
+      setNewReferral({...newReferral, code: generatedCode});
+    } else {
+      const generatedCode = generateUniqueReferralCode(event.name);
+      setNewReferral({...newReferral, code: generatedCode});
+    }
   };
 
   const handleToggleStatus = (referralId, currentStatus) => {
@@ -98,26 +121,64 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
             }}>
               레퍼럴 코드
             </label>
-            <input
-                type="text"
-                value={newReferral.code}
-                onChange={(e) => setNewReferral(
-                    {...newReferral, code: e.target.value.toUpperCase()})}
-                placeholder="예: SINU2025SPECIAL"
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: '2px solid #e2e8f0',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  outline: 'none',
-                  transition: 'border-color 0.3s ease',
-                  boxSizing: 'border-box',
-                  fontFamily: 'monospace'
-                }}
-                onFocus={(e) => e.target.style.borderColor = '#16a34a'}
-                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-            />
+            <div style={{display: 'flex', gap: '8px'}}>
+              <input
+                  type="text"
+                  value={newReferral.code}
+                  onChange={(e) => setNewReferral(
+                      {...newReferral, code: e.target.value.toUpperCase()})}
+                  placeholder="예: SINU2025SPECIAL"
+                  style={{
+                    flex: 1,
+                    padding: '12px 16px',
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    outline: 'none',
+                    transition: 'border-color 0.3s ease',
+                    boxSizing: 'border-box',
+                    fontFamily: 'monospace'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#16a34a'}
+                  onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+              />
+              <button
+                  type="button"
+                  onClick={handleGenerateCode}
+                  style={{
+                    padding: '12px',
+                    backgroundColor: '#f0fdf4',
+                    border: '2px solid #bbf7d0',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    color: '#16a34a'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = '#dcfce7';
+                    e.target.style.borderColor = '#86efac';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = '#f0fdf4';
+                    e.target.style.borderColor = '#bbf7d0';
+                  }}
+              >
+                <FiRefreshCw size={14}/>
+                자동생성
+              </button>
+            </div>
+            <div style={{
+              fontSize: '12px',
+              color: '#64748b',
+              marginTop: '6px'
+            }}>
+              💡 자동생성 버튼을 클릭하면 이벤트명과 할인율을 기반으로 코드가 생성됩니다
+            </div>
           </div>
 
           <div style={{
