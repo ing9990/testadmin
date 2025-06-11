@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import EventManagement from './EventManagement';
 import EventDetail from './EventDetail';
 import ReferralDetail from './ReferralDetail';
+import SettlementManagement from './SettlementManagement';
 
 const PromotionManagement = ({selectedMenu}) => {
   const [currentView, setCurrentView] = useState('events'); // events, eventDetail, referralDetail
@@ -28,6 +29,10 @@ const PromotionManagement = ({selectedMenu}) => {
     setCurrentView('eventDetail');
     setSelectedReferral(null);
   };
+
+  if (selectedMenu === '정산 관리') {
+    return <SettlementManagement/>;
+  }
 
   if (selectedMenu === '레퍼럴 코드 관리') {
     // 레퍼럴 코드 관리 페이지는 추후 구현

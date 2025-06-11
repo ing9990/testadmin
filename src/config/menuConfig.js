@@ -2,6 +2,7 @@ import {
   FiBarChart2,
   FiBell,
   FiCreditCard,
+  FiDollarSign,
   FiFileText,
   FiGift,
   FiGlobe,
@@ -29,7 +30,8 @@ export const menuItems = [
     hasSubmenu: true,
     submenus: [
       {icon: FiTag, label: '이벤트 관리'},
-      {icon: FiPercent, label: '레퍼럴 코드 관리'}
+      {icon: FiPercent, label: '레퍼럴 코드 관리'},
+      {icon: FiDollarSign, label: '정산 관리'}
     ]
   },
   {
@@ -54,6 +56,8 @@ export const getPageTitle = (selectedMenu) => {
       return '이벤트 관리';
     case '레퍼럴 코드 관리':
       return '레퍼럴 코드 관리';
+    case '정산 관리':
+      return '정산 관리';
     default:
       return '홈페이지 관리';
   }
@@ -62,7 +66,7 @@ export const getPageTitle = (selectedMenu) => {
 // 활성 메뉴 체크 함수
 export const isMenuActive = (menuLabel, selectedMenu) => {
   const homepageSubmenus = ['홈페이지 관리', '전문가 페이지 관리', '공지사항 관리'];
-  const promotionSubmenus = ['프로모션', '이벤트 관리', '레퍼럴 코드 관리'];
+  const promotionSubmenus = ['프로모션', '이벤트 관리', '레퍼럴 코드 관리', '정산 관리'];
 
   if (menuLabel === '홈페이지 관리') {
     return homepageSubmenus.includes(selectedMenu);

@@ -3,6 +3,7 @@ import {
   FiArrowLeft,
   FiCalendar,
   FiCheck,
+  FiClock,
   FiCopy,
   FiDollarSign,
   FiEdit3,
@@ -14,7 +15,11 @@ import {
   FiUsers,
   FiUserX
 } from 'react-icons/fi';
-import {events, getReferralStatusStyle} from '../data/promotionData';
+import {
+  events,
+  getPaybackStatusStyle,
+  getReferralStatusStyle
+} from '../data/promotionData';
 
 const ReferralDetail = ({referral, onBack}) => {
   const [copiedCode, setCopiedCode] = useState(false);
@@ -1039,12 +1044,12 @@ const ReferralDetail = ({referral, onBack}) => {
                     <div
                         key={customer.id}
                         style={{
-                          padding: '16px 24px',
+                          padding: '20px 24px',
                           borderBottom: index < referral.customers.length - 1
                               ? '1px solid #f1f5f9' : 'none',
                           display: 'flex',
                           justifyContent: 'space-between',
-                          alignItems: 'center',
+                          alignItems: 'flex-start',
                           transition: 'background-color 0.3s ease'
                         }}
                         onMouseEnter={(e) => e.target.style.backgroundColor = '#f8fafc'}
@@ -1052,71 +1057,216 @@ const ReferralDetail = ({referral, onBack}) => {
                     >
                       <div style={{
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px'
+                        alignItems: 'flex-start',
+                        gap: '16px',
+                        flex: 1
                       }}>
                         <div style={{
-                          width: '32px',
-                          height: '32px',
+                          width: '40px',
+                          height: '40px',
                           backgroundColor: customer.retained ? '#dcfce7'
                               : '#fee2e2',
                           borderRadius: '50%',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center'
+                          justifyContent: 'center',
+                          flexShrink: 0
                         }}>
                           {customer.retained ?
-                              <FiUserCheck size={16}
+                              <FiUserCheck size={20}
                                            style={{color: '#16a34a'}}/> :
-                              <FiUserX size={16} style={{color: '#dc2626'}}/>
+                              <FiUserX size={20} style={{color: '#dc2626'}}/>
                           }
                         </div>
-                        <div>
+                        <div style={{flex: 1}}>
                           <div style={{
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            color: '#1f2937'
-                          }}>
-                            {customer.name}
-                          </div>
-                          <div style={{
-                            fontSize: '12px',
-                            color: '#64748b',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '4px'
+                            gap: '12px',
+                            marginBottom: '8px'
                           }}>
-                            <FiCalendar size={10}/>
-                            {customer.joinDate} 가입
+                            <div style={{
+                              fontSize: '16px',
+                              fontWeight: '600',
+                              color: '#1f2937'
+                            }}>
+                              {customer.name}
+                            </div>
+                            <div style={{
+                              fontSize: '13px',
+                              color: '#64748b',
+                              fontFamily: 'monospace',
+                              backgroundColor: '#f1f5f9',
+                              padding: '2px 8px',
+                              borderRadius: '4px'
+                            }}>
+                              {customer.phone}
+                            </div>
+                          </div>
+
+                          <div style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '12px',
+                            fontSize: '13px',
+                            color: '#64748b',
+                            marginBottom: '8px'
+                          }}>
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}>
+                              <FiCalendar size={12}/>
+                              가입: {customer.joinDate}
+                            </div>
+
+                            {customer.retained ? (
+                                <div style={{
+                                  color: '#16a34a',
+                                  fontWeight: '500',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}>
+                                  <div style={{
+                                    width: '6px',
+                                    height: '6px',
+                                    backgroundColor: '#16a34a',
+                                    borderRadius: '50%'
+                                  }}/>
+                                  {customer.retainedDays}일째 이용중
+                                </div>
+                            ) : (
+                                <div style={{
+                                  color: '#dc2626',
+                                  fontWeight: '500',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}>
+                                  <div style={{
+                                    width: '6px',
+                                    height: '6px',
+                                    backgroundColor: '#dc2626',
+                                    borderRadius: '50%'
+                                  }}/>
+                                  {customer.churDate} 이탈
+                                  ({customer.retainedDays}일 이용)
+                                </div>
+                            )}
+
+                            {/* 31일 기준 정보 */}
+                            {customer.paybackStatus === 'pending' && (
+                                <div style={{
+                                  color: '#0369a1',
+                                  fontWeight: '500',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}>
+                                  <FiClock size={12}/>
+                                  {customer.paybackEligibleDate} 31일 도달
+                                </div>
+                            )}
+                          </div>
+
+                          <div style={{
+                            display: 'flex',
+                            gap: '8px',
+                            fontSize: '12px'
+                          }}>
+                            <div style={{
+                              padding: '4px 8px',
+                              backgroundColor: '#f0f9ff',
+                              borderRadius: '4px',
+                              color: '#0369a1'
+                            }}>
+                              원가: ₩{customer.originalPrice.toLocaleString()}
+                            </div>
+                            <div style={{
+                              padding: '4px 8px',
+                              backgroundColor: '#fef3c7',
+                              borderRadius: '4px',
+                              color: '#92400e'
+                            }}>
+                              할인: {customer.discountRate}%
+                            </div>
+                            <div style={{
+                              padding: '4px 8px',
+                              backgroundColor: '#f0fdf4',
+                              borderRadius: '4px',
+                              color: '#15803d',
+                              fontWeight: '500'
+                            }}>
+                              실매출: ₩{customer.actualRevenue.toLocaleString()}
+                            </div>
                           </div>
                         </div>
                       </div>
-                      <div style={{textAlign: 'right'}}>
+
+                      <div style={{
+                        textAlign: 'right',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-end',
+                        gap: '8px'
+                      }}>
                         <div style={{
-                          fontSize: '14px',
-                          fontWeight: '600',
+                          fontSize: '16px',
+                          fontWeight: '700',
                           color: '#1f2937'
                         }}>
-                          ₩{customer.revenue.toLocaleString()}
+                          ₩{customer.actualRevenue.toLocaleString()}
                         </div>
+
                         <div style={{
                           fontSize: '12px',
                           color: customer.retained ? '#16a34a' : '#dc2626',
-                          fontWeight: '500',
-                          marginBottom: '4px'
+                          fontWeight: '600',
+                          padding: '4px 8px',
+                          backgroundColor: customer.retained ? '#f0fdf4'
+                              : '#fef2f2',
+                          borderRadius: '6px',
+                          border: `1px solid ${customer.retained ? '#dcfce7'
+                              : '#fecaca'}`
                         }}>
-                          {customer.retained ? '유지' : '이탈'}
+                          {customer.retained ? '✓ 유지중' : '✗ 이탈'}
                         </div>
-                        <div style={{
-                          fontSize: '11px',
-                          color: '#0ea5e9',
-                          fontWeight: '500',
-                          backgroundColor: '#f0f9ff',
-                          padding: '2px 6px',
-                          borderRadius: '4px'
-                        }}>
-                          페이백: ₩50,000
-                        </div>
+
+                        {(() => {
+                          const statusStyle = getPaybackStatusStyle(
+                              customer.paybackStatus, customer.isPaid);
+                          return (
+                              <div style={{
+                                fontSize: '11px',
+                                color: statusStyle.color,
+                                fontWeight: '600',
+                                backgroundColor: statusStyle.bg,
+                                padding: '6px 10px',
+                                borderRadius: '8px',
+                                border: `1px solid ${statusStyle.border}`,
+                                minWidth: '80px',
+                                textAlign: 'center'
+                              }}>
+                                {statusStyle.text}
+                              </div>
+                          );
+                        })()}
+
+                        {customer.paybackDue > 0 && (
+                            <div style={{
+                              fontSize: '11px',
+                              color: '#0ea5e9',
+                              fontWeight: '600',
+                              backgroundColor: '#f0f9ff',
+                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              border: '1px solid #e0f2fe'
+                            }}>
+                              페이백: ₩{customer.paybackDue.toLocaleString()}
+                            </div>
+                        )}
                       </div>
                     </div>
                 ))

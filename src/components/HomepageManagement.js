@@ -6,10 +6,10 @@ import NoticeManagement from './NoticeManagement';
 import PromotionManagement from './PromotionManagement';
 
 const HomepageManagement = () => {
-  const [selectedMenu, setSelectedMenu] = useState('공지사항 관리');
+  const [selectedMenu, setSelectedMenu] = useState('이벤트 관리'); // 기본값을 이벤트 관리로 변경
   const [expandedMenus, setExpandedMenus] = useState({
     '홈페이지 관리': true,
-    '프로모션': false
+    '프로모션': true // 프로모션 메뉴도 기본으로 열어둠
   });
 
   // 서브메뉴 토글
@@ -34,6 +34,7 @@ const HomepageManagement = () => {
         return <NoticeManagement/>;
       case '이벤트 관리':
       case '레퍼럴 코드 관리':
+      case '정산 관리':
         return <PromotionManagement selectedMenu={selectedMenu}/>;
       default:
         return <ExpertPage/>;

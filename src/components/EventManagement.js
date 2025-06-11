@@ -7,7 +7,12 @@ import {
   FiTag,
   FiUsers
 } from 'react-icons/fi';
-import {events, getEventStatusStyle} from '../data/promotionData';
+import {
+  calculateEventTotalRedeems,
+  calculateEventTotalRevenue,
+  events,
+  getEventStatusStyle
+} from '../data/promotionData';
 
 const EventManagement = ({onEventSelect}) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -366,6 +371,8 @@ const EventManagement = ({onEventSelect}) => {
         }}>
           {filteredEvents.map((event) => {
             const statusStyle = getEventStatusStyle(event.status);
+            const calculatedRevenue = calculateEventTotalRevenue(event.id);
+            const calculatedRedeems = calculateEventTotalRedeems(event.id);
 
             return (
                 <div
@@ -460,7 +467,7 @@ const EventManagement = ({onEventSelect}) => {
                         fontWeight: '700',
                         color: '#0c4a6e'
                       }}>
-                        {event.totalRedeems}
+                        {calculatedRedeems}
                       </div>
                     </div>
 
@@ -490,7 +497,7 @@ const EventManagement = ({onEventSelect}) => {
                         fontWeight: '700',
                         color: '#14532d'
                       }}>
-                        ₩{event.totalRevenue.toLocaleString()}
+                        ₩{calculatedRevenue.toLocaleString()}
                       </div>
                     </div>
                   </div>

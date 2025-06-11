@@ -8,8 +8,8 @@ export const events = [
     status: 'active', // active, inactive, ended
     createdAt: '2025-06-01',
     endDate: '2025-12-31',
-    totalRedeems: 45,
-    totalRevenue: 2250000,
+    totalRedeems: 8, // 5 + 2 + 1 = 실제 고객 수 합계
+    totalRevenue: 0, // 실제 계산으로 대체됨
     referralCodeCount: 3
   },
   {
@@ -20,8 +20,8 @@ export const events = [
     status: 'active',
     createdAt: '2025-05-15',
     endDate: '2025-11-30',
-    totalRedeems: 28,
-    totalRevenue: 1400000,
+    totalRedeems: 0, // 0 + 0 = 실제 고객 수 합계
+    totalRevenue: 0, // 실제 계산으로 대체됨
     referralCodeCount: 2
   },
   {
@@ -33,10 +33,38 @@ export const events = [
     createdAt: '2025-04-01',
     endDate: '2025-05-31',
     totalRedeems: 67,
-    totalRevenue: 3350000,
+    totalRevenue: 0, // 실제 계산으로 대체됨
     referralCodeCount: 4
   }
 ];
+
+// 서비스 원가
+export const SERVICE_BASE_PRICE = 990000; // 99만원
+
+// 이벤트별 총 매출 계산 함수
+export const calculateEventTotalRevenue = (eventId) => {
+  const eventReferralCodes = referralCodes.filter(
+      code => code.eventId === eventId);
+
+  return eventReferralCodes.reduce((total, referralCode) => {
+    const discountedPrice = SERVICE_BASE_PRICE * (1 - referralCode.discountRate
+        / 100);
+    const codeRevenue = discountedPrice * referralCode.currentUses;
+    return total + codeRevenue;
+  }, 0);
+};
+
+// 이벤트별 총 사용 횟수 계산 함수
+export const calculateEventTotalRedeems = (eventId) => {
+  const eventReferralCodes = referralCodes.filter(
+      code => code.eventId === eventId);
+  return eventReferralCodes.reduce((total, code) => total + code.currentUses,
+      0);
+};
+export const calculateReferralRevenue = (discountRate, currentUses) => {
+  const discountedPrice = SERVICE_BASE_PRICE * (1 - discountRate / 100);
+  return discountedPrice * currentUses;
+};
 
 // 레퍼럴 코드 데이터
 export const referralCodes = [
@@ -67,28 +95,85 @@ export const referralCodes = [
     customers: [
       {
         id: 1,
-        name: '김**',
+        name: '김철수',
+        phone: '010-1111-2222',
         joinDate: '2025-06-02',
         retained: true,
-        revenue: 50000,
-        paybackDue: 50000
+        retainedDays: 67, // 가입 후 67일째 유지중 (31일 초과)
+        churDate: null,
+        originalPrice: 990000,
+        discountRate: 30,
+        actualRevenue: 693000,
+        paybackDue: 50000,
+        // 정산 상태 추가
+        paybackStatus: 'payable', // payable: 지급 대상, pending: 대기중, churned_before_31: 31일 전 이탈
+        paybackEligibleDate: '2025-07-03', // 31일째 되는 날 (페이백 자격 획득일)
+        isPaid: false // 실제 지급 여부
       },
       {
         id: 2,
-        name: '이**',
+        name: '이영희',
+        phone: '010-2222-3333',
         joinDate: '2025-06-03',
         retained: true,
-        revenue: 50000,
-        paybackDue: 50000
+        retainedDays: 66, // 66일째 유지중 (31일 초과)
+        churDate: null,
+        originalPrice: 990000,
+        discountRate: 30,
+        actualRevenue: 693000,
+        paybackDue: 50000,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-04',
+        isPaid: true // 이미 지급됨
       },
       {
         id: 3,
-        name: '박**',
+        name: '박민수',
+        phone: '010-3333-4444',
         joinDate: '2025-06-05',
         retained: false,
-        revenue: 50000,
-        paybackDue: 50000
+        retainedDays: 45, // 45일간 유지 후 이탈 (31일 후 이탈)
+        churDate: '2025-07-20',
+        originalPrice: 990000,
+        discountRate: 30,
+        actualRevenue: 693000,
+        paybackDue: 50000,
+        paybackStatus: 'payable', // 31일 후 이탈이므로 지급 대상
+        paybackEligibleDate: '2025-07-06',
+        isPaid: false
       },
+      {
+        id: 7,
+        name: '홍성민',
+        phone: '010-7777-8888',
+        joinDate: '2025-07-25', // 최근 가입자 (아직 31일 안됨)
+        retained: true,
+        retainedDays: 17, // 17일째 유지중
+        churDate: null,
+        originalPrice: 990000,
+        discountRate: 30,
+        actualRevenue: 693000,
+        paybackDue: 50000,
+        paybackStatus: 'pending', // 31일 대기중
+        paybackEligibleDate: '2025-08-25', // 31일째 되는 날
+        isPaid: false
+      },
+      {
+        id: 8,
+        name: '윤지훈',
+        phone: '010-8888-9999',
+        joinDate: '2025-07-10',
+        retained: false,
+        retainedDays: 20, // 20일만 유지 후 이탈
+        churDate: '2025-07-30',
+        originalPrice: 990000,
+        discountRate: 30,
+        actualRevenue: 693000,
+        paybackDue: 0, // 31일 전 이탈로 페이백 없음
+        paybackStatus: 'churned_before_31', // 31일 전 이탈
+        paybackEligibleDate: '2025-08-10',
+        isPaid: false
+      }
     ]
   },
   {
@@ -117,19 +202,35 @@ export const referralCodes = [
     customers: [
       {
         id: 4,
-        name: '최**',
+        name: '최지원',
+        phone: '010-4444-5555',
         joinDate: '2025-06-06',
         retained: true,
-        revenue: 50000,
-        paybackDue: 50000
+        retainedDays: 63, // 63일째 유지중 (31일 초과)
+        churDate: null,
+        originalPrice: 990000,
+        discountRate: 50,
+        actualRevenue: 495000,
+        paybackDue: 50000,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-07',
+        isPaid: true // 이미 지급됨
       },
       {
         id: 5,
-        name: '정**',
+        name: '정수민',
+        phone: '010-5555-6666',
         joinDate: '2025-06-07',
         retained: true,
-        revenue: 50000,
-        paybackDue: 50000
+        retainedDays: 62, // 62일째 유지중 (31일 초과)
+        churDate: null,
+        originalPrice: 990000,
+        discountRate: 50,
+        actualRevenue: 495000,
+        paybackDue: 50000,
+        paybackStatus: 'payable',
+        paybackEligibleDate: '2025-07-08',
+        isPaid: false
       },
     ]
   },
@@ -159,10 +260,15 @@ export const referralCodes = [
     customers: [
       {
         id: 6,
-        name: '강**',
+        name: '강동욱',
+        phone: '010-6666-7777',
         joinDate: '2025-06-11',
         retained: true,
-        revenue: 50000,
+        retainedDays: 58,
+        churDate: null,
+        originalPrice: 990000,
+        discountRate: 20, // 20% 할인
+        actualRevenue: 792000, // 99만원 - 20% = 79만 2천원
         paybackDue: 50000
       },
     ]
@@ -323,6 +429,209 @@ export const generateUniqueReferralCode = (eventName, discountRate) => {
   }
 
   return code;
+};
+
+// 엑셀 정산 데이터 생성 함수 (정산 완료된 항목 제외)
+export const generateSettlementData = () => {
+  const settlementData = [];
+
+  events.forEach(event => {
+    const eventReferralCodes = referralCodes.filter(
+        code => code.eventId === event.id);
+
+    eventReferralCodes.forEach(referralCode => {
+      // 사용자가 있고, 아직 정산되지 않은 코드만 포함
+      if (referralCode.currentUses > 0
+          && !referralCode.paybackInfo?.isSettled) {
+        // 고객 전화번호 목록 생성 (처음 2개만 표시, 나머지는 "외 N명")
+        const customerPhones = referralCode.customers.map(
+            customer => customer.phone);
+        let displayPhones;
+
+        if (customerPhones.length <= 2) {
+          displayPhones = customerPhones.join(', ');
+        } else {
+          const firstTwo = customerPhones.slice(0, 2).join(', ');
+          const remaining = customerPhones.length - 2;
+          displayPhones = `${firstTwo} 외 ${remaining}명`;
+        }
+
+        // 매출 계산
+        const totalRevenue = calculateReferralRevenue(referralCode.discountRate,
+            referralCode.currentUses);
+
+        // 페이백 금액 계산 (31일 이상 유지한 고객 수 × 5만원)
+        const payableCustomers = referralCode.customers.filter(customer =>
+            customer.paybackStatus === 'payable' || customer.isPaid
+        ).length;
+        const paybackAmount = payableCustomers * 50000;
+
+        settlementData.push({
+          eventName: event.name,
+          referralCode: referralCode.code,
+          creatorInfo: `${referralCode.paybackInfo?.creatorName
+          || '정보없음'} | ${referralCode.paybackInfo?.creatorTitle
+          || '정보없음'} | ${referralCode.paybackInfo?.contactPhone || '정보없음'}`,
+          creatorName: referralCode.paybackInfo?.creatorName || '정보없음',
+          creatorTitle: referralCode.paybackInfo?.creatorTitle || '정보없음',
+          creatorPhone: referralCode.paybackInfo?.contactPhone || '정보없음',
+          customerPhones: displayPhones || '고객 없음',
+          totalCustomers: referralCode.currentUses,
+          totalRevenue: totalRevenue,
+          paybackAmount: paybackAmount,
+          discountRate: referralCode.discountRate,
+          bankInfo: `${referralCode.paybackInfo?.bankName
+          || ''} ${referralCode.paybackInfo?.accountNumber
+          || ''} ${referralCode.paybackInfo?.accountHolder || ''}`.trim(),
+          isSettled: referralCode.paybackInfo?.isSettled || false
+        });
+      }
+    });
+  });
+
+  return settlementData;
+};
+
+// 정산 완료된 데이터만 조회하는 함수
+export const getCompletedSettlements = () => {
+  const completedData = [];
+
+  events.forEach(event => {
+    const eventReferralCodes = referralCodes.filter(
+        code => code.eventId === event.id);
+
+    eventReferralCodes.forEach(referralCode => {
+      if (referralCode.currentUses > 0 && referralCode.paybackInfo?.isSettled) {
+        const customerPhones = referralCode.customers.map(
+            customer => customer.phone);
+        let displayPhones;
+
+        if (customerPhones.length <= 2) {
+          displayPhones = customerPhones.join(', ');
+        } else {
+          const firstTwo = customerPhones.slice(0, 2).join(', ');
+          const remaining = customerPhones.length - 2;
+          displayPhones = `${firstTwo} 외 ${remaining}명`;
+        }
+
+        const totalRevenue = calculateReferralRevenue(referralCode.discountRate,
+            referralCode.currentUses);
+        const payableCustomers = referralCode.customers.filter(customer =>
+            customer.paybackStatus === 'payable' || customer.isPaid
+        ).length;
+        const paybackAmount = payableCustomers * 50000;
+
+        completedData.push({
+          eventName: event.name,
+          referralCode: referralCode.code,
+          creatorInfo: `${referralCode.paybackInfo?.creatorName
+          || '정보없음'} | ${referralCode.paybackInfo?.creatorTitle
+          || '정보없음'} | ${referralCode.paybackInfo?.contactPhone || '정보없음'}`,
+          creatorName: referralCode.paybackInfo?.creatorName || '정보없음',
+          creatorTitle: referralCode.paybackInfo?.creatorTitle || '정보없음',
+          creatorPhone: referralCode.paybackInfo?.contactPhone || '정보없음',
+          customerPhones: displayPhones || '고객 없음',
+          totalCustomers: referralCode.currentUses,
+          totalRevenue: totalRevenue,
+          paybackAmount: paybackAmount,
+          discountRate: referralCode.discountRate,
+          bankInfo: `${referralCode.paybackInfo?.bankName
+          || ''} ${referralCode.paybackInfo?.accountNumber
+          || ''} ${referralCode.paybackInfo?.accountHolder || ''}`.trim(),
+          isSettled: true,
+          settledDate: '2025-07-31' // 정산 완료일 (예시)
+        });
+      }
+    });
+  });
+
+  return completedData;
+};
+
+// CSV 형태로 변환하는 함수
+export const convertToCSV = (data) => {
+  const headers = [
+    '이벤트 이름',
+    '레퍼럴 코드',
+    '생성자 정보',
+    '고객 전화번호',
+    '총 고객 수',
+    '총 매출',
+    '페이백 금액',
+    '할인율',
+    '계좌 정보'
+  ];
+
+  const csvContent = [
+    headers.join(','),
+    ...data.map(row => [
+      `"${row.eventName}"`,
+      `"${row.referralCode}"`,
+      `"${row.creatorInfo}"`,
+      `"${row.customerPhones}"`,
+      row.totalCustomers,
+      row.totalRevenue,
+      row.paybackAmount,
+      `${row.discountRate}%`,
+      `"${row.bankInfo}"`
+    ].join(','))
+  ].join('\n');
+
+  return csvContent;
+};
+
+// 파일 다운로드 함수
+export const downloadFile = (content, filename, contentType) => {
+  const blob = new Blob([content], {type: contentType});
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+export const getPaybackStatusStyle = (status, isPaid) => {
+  if (isPaid) {
+    return {
+      bg: '#f0fdf4',
+      color: '#15803d',
+      text: '✓ 지급완료',
+      border: '#bbf7d0'
+    };
+  }
+
+  switch (status) {
+    case 'payable':
+      return {
+        bg: '#fef3c7',
+        color: '#d97706',
+        text: '💰 지급대상',
+        border: '#fde68a'
+      };
+    case 'pending':
+      return {
+        bg: '#f0f9ff',
+        color: '#0369a1',
+        text: '⏳ 대기중',
+        border: '#bae6fd'
+      };
+    case 'churned_before_31':
+      return {
+        bg: '#fef2f2',
+        color: '#dc2626',
+        text: '✗ 지급불가',
+        border: '#fecaca'
+      };
+    default:
+      return {
+        bg: '#f3f4f6',
+        color: '#4a5568',
+        text: '미정',
+        border: '#d1d5db'
+      };
+  }
 };
 
 // 레퍼럴 코드 상태별 스타일

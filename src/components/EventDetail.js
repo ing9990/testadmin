@@ -4,6 +4,7 @@ import {
   FiCheck,
   FiCopy,
   FiDollarSign,
+  FiExternalLink,
   FiEye,
   FiPercent,
   FiPlay,
@@ -13,6 +14,9 @@ import {
   FiUsers
 } from 'react-icons/fi';
 import {
+  calculateEventTotalRedeems,
+  calculateEventTotalRevenue,
+  calculateReferralRevenue,
   generateUniqueReferralCode,
   getReferralStatusStyle,
   referralCodes
@@ -116,7 +120,9 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
           padding: '32px',
           width: '500px',
           maxWidth: '90vw',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.15)'
+          boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+          maxHeight: '90vh',
+          overflowY: 'auto'
         }}>
           <h2 style={{
             fontSize: '24px',
@@ -582,6 +588,8 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                   cursor: 'pointer',
                   transition: 'all 0.3s ease'
                 }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#4b5563'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#6b7280'}
             >
               취소
             </button>
@@ -710,6 +718,94 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
             </p>
           </div>
 
+          {/* 접속 링크 섹션 */}
+          <div style={{marginBottom: '24px'}}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '16px 20px',
+              backgroundColor: '#f0f9ff',
+              borderRadius: '12px',
+              border: '1px solid #e0f2fe',
+              marginBottom: '12px'
+            }}>
+              <div style={{flex: 1}}>
+                <div style={{
+                  fontSize: '12px',
+                  fontWeight: '500',
+                  color: '#0369a1',
+                  marginBottom: '4px'
+                }}>
+                  🔗 이벤트 접속 링크
+                </div>
+                <div style={{
+                  fontSize: '14px',
+                  color: '#0c4a6e',
+                  fontFamily: 'monospace',
+                  wordBreak: 'break-all'
+                }}>
+                  {event.accessLink}
+                </div>
+              </div>
+              <div style={{display: 'flex', gap: '8px', marginLeft: '16px'}}>
+                <button
+                    onClick={handleCopyLink}
+                    style={{
+                      padding: '8px 12px',
+                      backgroundColor: copiedLink ? '#dcfce7' : 'white',
+                      border: '1px solid #e0f2fe',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '12px',
+                      fontWeight: '500'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!copiedLink) {
+                        e.target.style.backgroundColor = '#f8fafc';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!copiedLink) {
+                        e.target.style.backgroundColor = 'white';
+                      }
+                    }}
+                >
+                  {copiedLink ?
+                      <><FiCheck size={14} style={{color: '#16a34a'}}/>복사됨</> :
+                      <><FiCopy size={14} style={{color: '#0ea5e9'}}/>복사</>
+                  }
+                </button>
+                <button
+                    onClick={() => window.open(event.accessLink, '_blank')}
+                    style={{
+                      padding: '8px 12px',
+                      backgroundColor: 'white',
+                      border: '1px solid #e0f2fe',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      color: '#0ea5e9'
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#f8fafc'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
+                >
+                  <FiExternalLink size={14}/>
+                  열기
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* 통계 카드 */}
           <div style={{
             display: 'grid',
@@ -745,7 +841,7 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                     fontWeight: '700',
                     color: '#0c4a6e'
                   }}>
-                    {event.totalRedeems}
+                    {calculateEventTotalRedeems(event.id)}
                   </div>
                   <div style={{
                     fontSize: '12px',
@@ -787,7 +883,7 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                     fontWeight: '700',
                     color: '#14532d'
                   }}>
-                    ₩{event.totalRevenue.toLocaleString()}
+                    ₩{calculateEventTotalRevenue(event.id).toLocaleString()}
                   </div>
                   <div style={{
                     fontSize: '12px',
@@ -872,6 +968,8 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
               const statusStyle = getReferralStatusStyle(referral.status);
               const usagePercentage = (referral.currentUses / referral.maxUses)
                   * 100;
+              const calculatedRevenue = calculateReferralRevenue(
+                  referral.discountRate, referral.currentUses);
 
               return (
                   <div
@@ -957,7 +1055,7 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                           <span>할인율: {referral.discountRate}{referral.discountType
                           === 'percentage' ? '%' : '원'}</span>
                           <span>유지율: {referral.retentionRate}%</span>
-                          <span>매출: ₩{referral.revenue.toLocaleString()}</span>
+                          <span>매출: ₩{calculatedRevenue.toLocaleString()}</span>
                         </div>
                       </div>
                       <div style={{
