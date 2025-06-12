@@ -10,7 +10,6 @@ import {
 import {referralCodes} from '../data/promotionData';
 
 const SettlementManagement = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState('current');
   const [hoveredCard, setHoveredCard] = useState(null);
 
   // 현재 날짜 기준으로 정산 기간 계산
@@ -116,7 +115,90 @@ const SettlementManagement = () => {
 
   // 전체 통계 계산
   const overallStats = useMemo(() => {
-    const allData = referralCodes.map(calculateSettlementData);
+    // 31일 유지 여부 확인 함수를 내부에 정의
+    const checkRetention31DaysLocal = (customer) => {
+      const joinDate = new Date(customer.joinDate);
+      const now = new Date();
+
+      if (customer.churDate) {
+        const churnDate = new Date(customer.churDate);
+        const retentionDays = Math.floor(
+            (churnDate - joinDate) / (1000 * 60 * 60 * 24));
+        return retentionDays >= 31;
+      }
+
+      const daysSinceJoin = Math.floor(
+          (now - joinDate) / (1000 * 60 * 60 * 24));
+      return daysSinceJoin >= 31;
+    };
+
+    // 정산 데이터 계산 함수를 내부에 정의
+    const calculateSettlementDataLocal = (referralCode) => {
+      const created = new Date(referralCode.createdAt);
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+      const createdDay = created.getDate();
+
+      let periodStart = new Date(currentYear, currentMonth, createdDay);
+      if (periodStart > now) {
+        periodStart = new Date(currentYear, currentMonth - 1, createdDay);
+      }
+
+      const periodEnd = new Date(periodStart.getFullYear(),
+          periodStart.getMonth() + 1, periodStart.getDate());
+
+      const totalCustomers = referralCode.customers.length;
+      const totalRevenue = referralCode.customers.reduce(
+          (sum, customer) => sum + customer.actualRevenue, 0);
+      const totalRetained31Days = referralCode.customers.filter(
+          customer => checkRetention31DaysLocal(customer)).length;
+      const totalPayback = totalRetained31Days * 50000;
+
+      const currentMonthCustomers = referralCode.customers.filter(customer => {
+        const joinDate = new Date(customer.joinDate);
+        return joinDate >= periodStart && joinDate < periodEnd;
+      });
+
+      const currentMonthRevenue = currentMonthCustomers.reduce(
+          (sum, customer) => sum + customer.actualRevenue, 0);
+      const currentMonthRetained31Days = currentMonthCustomers.filter(
+          customer => checkRetention31DaysLocal(customer)).length;
+      const currentMonthPayback = currentMonthRetained31Days * 50000;
+
+      const totalOriginalPrice = referralCode.customers.reduce(
+          (sum, customer) => sum + customer.originalPrice, 0);
+      const totalDiscountAmount = totalOriginalPrice - totalRevenue;
+
+      const currentMonthOriginalPrice = currentMonthCustomers.reduce(
+          (sum, customer) => sum + customer.originalPrice, 0);
+      const currentMonthDiscountAmount = currentMonthOriginalPrice
+          - currentMonthRevenue;
+
+      return {
+        periodStart,
+        periodEnd,
+        total: {
+          customers: totalCustomers,
+          revenue: totalRevenue,
+          payback: totalPayback,
+          originalPrice: totalOriginalPrice,
+          discountAmount: totalDiscountAmount,
+          retained31Days: totalRetained31Days
+        },
+        currentMonth: {
+          customers: currentMonthCustomers.length,
+          revenue: currentMonthRevenue,
+          payback: currentMonthPayback,
+          originalPrice: currentMonthOriginalPrice,
+          discountAmount: currentMonthDiscountAmount,
+          retained31Days: currentMonthRetained31Days,
+          customerList: currentMonthCustomers
+        }
+      };
+    };
+
+    const allData = referralCodes.map(calculateSettlementDataLocal);
 
     return {
       totalCustomers: allData.reduce((sum, data) => sum + data.total.customers,
