@@ -35,6 +35,7 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
     creatorName: '',
     contactPhone: '',
     contactEmail: '',
+    residentNumber: '', // 주민등록번호 추가
     bankName: '',
     accountNumber: '',
     accountHolder: ''
@@ -50,6 +51,7 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
         creatorName: newReferral.creatorName,
         contactPhone: newReferral.contactPhone,
         contactEmail: newReferral.contactEmail,
+        residentNumber: newReferral.residentNumber, // 주민등록번호 추가
         bankName: newReferral.bankName,
         accountNumber: newReferral.accountNumber,
         accountHolder: newReferral.accountHolder,
@@ -67,6 +69,7 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
       creatorName: '',
       contactPhone: '',
       contactEmail: '',
+      residentNumber: '',
       bankName: '',
       accountNumber: '',
       accountHolder: ''
@@ -99,6 +102,21 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
   const handleToggleStatus = (referralId, currentStatus) => {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
     console.log(`레퍼럴 코드 ${referralId} 상태 변경: ${newStatus}`);
+  };
+
+  // 주민등록번호 형식 자동 변환
+  const handleResidentNumberChange = (e) => {
+    let value = e.target.value.replace(/[^0-9]/g, ''); // 숫자만 추출
+
+    if (value.length > 13) {
+      value = value.slice(0, 13);
+    }
+
+    if (value.length > 6) {
+      value = value.slice(0, 6) + '-' + value.slice(6);
+    }
+
+    setNewReferral({...newReferral, residentNumber: value});
   };
 
   const CreateReferralModal = () => (
@@ -437,6 +455,45 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
               />
             </div>
 
+            <div style={{marginBottom: '16px'}}>
+              <label style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: '600',
+                color: '#0369a1',
+                marginBottom: '6px'
+              }}>
+                주민등록번호 *
+              </label>
+              <input
+                  type="text"
+                  value={newReferral.residentNumber}
+                  onChange={handleResidentNumberChange}
+                  placeholder="000000-0000000"
+                  maxLength="14"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '2px solid #bae6fd',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    outline: 'none',
+                    transition: 'border-color 0.3s ease',
+                    boxSizing: 'border-box',
+                    fontFamily: 'monospace'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#0ea5e9'}
+                  onBlur={(e) => e.target.style.borderColor = '#bae6fd'}
+              />
+              <div style={{
+                fontSize: '11px',
+                color: '#64748b',
+                marginTop: '4px'
+              }}>
+                * 세금 신고를 위해 필요한 정보입니다
+              </div>
+            </div>
+
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 2fr',
@@ -598,16 +655,16 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                 disabled={!newReferral.code || !newReferral.discountRate
                     || !newReferral.maxUses ||
                     !newReferral.creatorName || !newReferral.contactPhone ||
-                    !newReferral.bankName || !newReferral.accountNumber
-                    || !newReferral.accountHolder}
+                    !newReferral.residentNumber || !newReferral.bankName ||
+                    !newReferral.accountNumber || !newReferral.accountHolder}
                 style={{
                   flex: 1,
                   padding: '12px 20px',
                   backgroundColor: (newReferral.code && newReferral.discountRate
                       && newReferral.maxUses &&
                       newReferral.creatorName && newReferral.contactPhone &&
-                      newReferral.bankName && newReferral.accountNumber
-                      && newReferral.accountHolder)
+                      newReferral.residentNumber && newReferral.bankName &&
+                      newReferral.accountNumber && newReferral.accountHolder)
                       ? '#16a34a' : '#d1d5db',
                   color: 'white',
                   border: 'none',
@@ -617,8 +674,8 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                   cursor: (newReferral.code && newReferral.discountRate
                       && newReferral.maxUses &&
                       newReferral.creatorName && newReferral.contactPhone &&
-                      newReferral.bankName && newReferral.accountNumber
-                      && newReferral.accountHolder)
+                      newReferral.residentNumber && newReferral.bankName &&
+                      newReferral.accountNumber && newReferral.accountHolder)
                       ? 'pointer' : 'not-allowed',
                   transition: 'all 0.3s ease'
                 }}
