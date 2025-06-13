@@ -35,8 +35,6 @@ import {theme} from '../styles/theme';
 
 // 날짜 관련 유틸리티
 const formatCurrency = (amount) => `₩${amount.toLocaleString()}`;
-const formatDate = (dateString) => new Date(dateString).toLocaleDateString(
-    'ko-KR');
 
 const getMonthsBetween = (startDate, endDate) => {
   const months = [];
@@ -142,7 +140,9 @@ const SettlementSummaryCard = ({data, previousData}) => {
 
 // 메인 컴포넌트
 const SettlementManagement = () => {
-  const currentDate = new Date();
+  // currentDate를 useMemo로 감싸서 의존성 문제 해결
+  const currentDate = useMemo(() => new Date(), []);
+
   const [selectedMonth, setSelectedMonth] = useState({
     year: currentDate.getFullYear(),
     month: currentDate.getMonth() + 1,
