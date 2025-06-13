@@ -75,7 +75,7 @@ const SettlementStatusBadge = ({
     completed: {
       variant: 'success',
       icon: FiCheckCircle,
-      text: '정산 완료됨',
+      text: '정산 완료',
       buttonText: null
     },
     pending: {
@@ -300,6 +300,7 @@ const SettlementManagement = () => {
   });
   const [showDropdown, setShowDropdown] = useState(false);
   const [showExportOptions, setShowExportOptions] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // 상태 새로고침용
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     type: 'default',
@@ -316,7 +317,7 @@ const SettlementManagement = () => {
   // 현재 월 데이터
   const monthlyData = useMemo(() => {
     return getMonthlySettlementSummary(selectedMonth.year, selectedMonth.month);
-  }, [selectedMonth]);
+  }, [selectedMonth, refreshTrigger]); // refreshTrigger 의존성 추가
 
   // 이전 월 데이터 (비교용)
   const previousMonthData = useMemo(() => {
@@ -337,8 +338,8 @@ const SettlementManagement = () => {
         updateSettlementStatus(referralCode, selectedMonth.year,
             selectedMonth.month, 'completed');
         setConfirmModal({...confirmModal, isOpen: false});
-        // 데이터 새로고침을 위해 상태 업데이트
-        window.location.reload(); // 실제 구현에서는 상태 관리 라이브러리 사용
+        // 상태 새로고침 트리거
+        setRefreshTrigger(prev => prev + 1);
       }
     });
   }, [selectedMonth, confirmModal]);
