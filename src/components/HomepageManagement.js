@@ -4,12 +4,14 @@ import Header from './Header';
 import ExpertPage from './ExpertPage';
 import NoticeManagement from './NoticeManagement';
 import PromotionManagement from './PromotionManagement';
+import PaymentDetail from './PaymentDetail';
 
 const HomepageManagement = () => {
-  const [selectedMenu, setSelectedMenu] = useState('이벤트 관리'); // 기본값을 이벤트 관리로 변경
+  const [selectedMenu, setSelectedMenu] = useState('이벤트 관리');
   const [expandedMenus, setExpandedMenus] = useState({
     '홈페이지 관리': true,
-    '프로모션': true // 프로모션 메뉴도 기본으로 열어둠
+    '프로모션': true,
+    '예시페이지': false
   });
 
   // 서브메뉴 토글
@@ -36,6 +38,8 @@ const HomepageManagement = () => {
       case '레퍼럴 코드 관리':
       case '정산 관리':
         return <PromotionManagement selectedMenu={selectedMenu}/>;
+      case '결제 상세페이지':
+        return <PaymentDetail/>;
       default:
         return <ExpertPage/>;
     }
@@ -58,11 +62,19 @@ const HomepageManagement = () => {
 
         {/* Main Content */}
         <div style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
-          {/* Header */}
-          <Header selectedMenu={selectedMenu}/>
+          {/* Header - 결제 상세페이지가 아닐 때만 표시 */}
+          {selectedMenu !== '결제 상세페이지' && (
+              <Header selectedMenu={selectedMenu}/>
+          )}
 
           {/* Main Content Area */}
-          {renderMainContent()}
+          <div style={{
+            flex: 1,
+            overflow: 'auto',
+            ...(selectedMenu === '결제 상세페이지' ? {} : {})
+          }}>
+            {renderMainContent()}
+          </div>
         </div>
       </div>
   );

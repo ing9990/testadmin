@@ -337,7 +337,7 @@ const EventManagement = ({onEventSelect}) => {
             }}/>
             <input
                 type="text"
-                placeholder="이벤트 이름으로 검색..."
+                placeholder="이벤트 이름, 레퍼럴코드, 운영자 이름으로 검색..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{
