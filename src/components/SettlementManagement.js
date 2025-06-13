@@ -3,6 +3,7 @@ import React, {useCallback, useMemo, useState} from 'react';
 import {
   FiAlertCircle,
   FiCalendar,
+  FiCheck,
   FiCheckCircle,
   FiChevronDown,
   FiClock,
@@ -14,8 +15,10 @@ import {
   FiUsers
 } from 'react-icons/fi';
 import {
+  bulkUpdateSettlementStatus,
   getMonthlySettlementSummary,
-  referralCodes
+  referralCodes,
+  updateSettlementStatus
 } from '../data/promotionData';
 import {
   Badge,
@@ -56,26 +59,58 @@ const getMonthsBetween = (startDate, endDate) => {
 };
 
 // 정산 상태 뱃지 컴포넌트
-const SettlementStatusBadge = ({status, count}) => {
+const SettlementStatusBadge = ({
+  status,
+  count,
+  onClick,
+  showButton = false
+}) => {
   const statusConfig = {
     payable: {
-      variant: 'success',
-      icon: FiCheckCircle,
-      text: '정산 대상'
-    },
-    pending: {
       variant: 'warning',
       icon: FiClock,
-      text: '대기중'
+      text: '정산 대상',
+      buttonText: '정산 완료'
+    },
+    completed: {
+      variant: 'success',
+      icon: FiCheckCircle,
+      text: '정산 완료됨',
+      buttonText: null
+    },
+    pending: {
+      variant: 'info',
+      icon: FiClock,
+      text: '대기중',
+      buttonText: null
     },
     none: {
       variant: 'info',
       icon: FiAlertCircle,
-      text: '해당없음'
+      text: '해당없음',
+      buttonText: null
     }
   };
 
   const config = statusConfig[status] || statusConfig.none;
+
+  if (showButton && config.buttonText && onClick) {
+    return (
+        <Button
+            variant="success"
+            size="sm"
+            icon={FiCheck}
+            onClick={onClick}
+            style={{
+              fontSize: '11px',
+              padding: '4px 8px',
+              height: 'auto'
+            }}
+        >
+          {config.buttonText}
+        </Button>
+    );
+  }
 
   return (
       <Badge variant={config.variant} icon={config.icon}>
@@ -138,9 +173,122 @@ const SettlementSummaryCard = ({data, previousData}) => {
   );
 };
 
+// 확인 모달 컴포넌트
+const ConfirmModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText = "확인",
+  cancelText = "취소",
+  type = "default"
+}) => {
+  if (!isOpen) {
+    return null;
+  }
+
+  const typeStyles = {
+    success: {
+      iconBg: theme.colors.success[100],
+      iconColor: theme.colors.success[600],
+      confirmBg: theme.colors.success[600]
+    },
+    warning: {
+      iconBg: theme.colors.warning[100],
+      iconColor: theme.colors.warning[600],
+      confirmBg: theme.colors.warning[600]
+    },
+    default: {
+      iconBg: theme.colors.primary[100],
+      iconColor: theme.colors.primary[600],
+      confirmBg: theme.colors.primary[600]
+    }
+  };
+
+  const style = typeStyles[type];
+
+  return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000
+      }}>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: theme.borderRadius.xl,
+          padding: theme.spacing[8],
+          width: '400px',
+          maxWidth: '90vw',
+          boxShadow: theme.shadows.xl,
+          textAlign: 'center'
+        }}>
+          <div style={{
+            width: '64px',
+            height: '64px',
+            backgroundColor: style.iconBg,
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: `0 auto ${theme.spacing[6]}`
+          }}>
+            <FiCheck size={28} style={{color: style.iconColor}}/>
+          </div>
+
+          <h2 style={{
+            fontSize: theme.fontSize.xl[0],
+            fontWeight: theme.fontWeight.semibold,
+            color: theme.colors.neutral[900],
+            margin: `0 0 ${theme.spacing[3]} 0`
+          }}>
+            {title}
+          </h2>
+
+          <p style={{
+            fontSize: theme.fontSize.sm[0],
+            color: theme.colors.neutral[600],
+            margin: `0 0 ${theme.spacing[6]} 0`,
+            lineHeight: '1.5'
+          }}>
+            {message}
+          </p>
+
+          <div style={{
+            display: 'flex',
+            gap: theme.spacing[3]
+          }}>
+            <Button
+                variant="secondary"
+                onClick={onClose}
+                style={{flex: 1}}
+            >
+              {cancelText}
+            </Button>
+            <Button
+                onClick={onConfirm}
+                style={{
+                  flex: 1,
+                  backgroundColor: style.confirmBg
+                }}
+            >
+              {confirmText}
+            </Button>
+          </div>
+        </div>
+      </div>
+  );
+};
+
 // 메인 컴포넌트
 const SettlementManagement = () => {
-  // currentDate를 useMemo로 감싸서 의존성 문제 해결
   const currentDate = useMemo(() => new Date(), []);
 
   const [selectedMonth, setSelectedMonth] = useState({
@@ -152,6 +300,13 @@ const SettlementManagement = () => {
   });
   const [showDropdown, setShowDropdown] = useState(false);
   const [showExportOptions, setShowExportOptions] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    type: 'default',
+    title: '',
+    message: '',
+    onConfirm: null
+  });
 
   // 월 선택 옵션 생성
   const monthOptions = useMemo(() => {
@@ -171,12 +326,54 @@ const SettlementManagement = () => {
     return getMonthlySettlementSummary(prevMonth.year, prevMonth.month);
   }, [selectedMonth]);
 
+  // 개별 정산 처리
+  const handleIndividualSettlement = useCallback((referralCode) => {
+    setConfirmModal({
+      isOpen: true,
+      type: 'success',
+      title: '정산 완료 확인',
+      message: `${referralCode}의 정산을 완료하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`,
+      onConfirm: () => {
+        updateSettlementStatus(referralCode, selectedMonth.year,
+            selectedMonth.month, 'completed');
+        setConfirmModal({...confirmModal, isOpen: false});
+        // 데이터 새로고침을 위해 상태 업데이트
+        window.location.reload(); // 실제 구현에서는 상태 관리 라이브러리 사용
+      }
+    });
+  }, [selectedMonth, confirmModal]);
+
+  // 전체 정산 처리
+  const handleBulkSettlement = useCallback(() => {
+    const payableItems = monthlyData.details.filter(
+        item => item.status === 'payable');
+
+    if (payableItems.length === 0) {
+      alert('정산 대상이 없습니다.');
+      return;
+    }
+
+    setConfirmModal({
+      isOpen: true,
+      type: 'warning',
+      title: '전체 정산 확인',
+      message: `${selectedMonth.label}의 모든 정산 대상 ${payableItems.length}개를 정산 완료 처리하시겠습니까?\n총 페이백 금액: ${formatCurrency(
+          payableItems.reduce((sum, item) => sum + item.paybackAmount, 0))}`,
+      onConfirm: () => {
+        bulkUpdateSettlementStatus(selectedMonth.year, selectedMonth.month,
+            'completed');
+        setConfirmModal({...confirmModal, isOpen: false});
+        // 데이터 새로고침을 위해 상태 업데이트
+        window.location.reload(); // 실제 구현에서는 상태 관리 라이브러리 사용
+      }
+    });
+  }, [monthlyData.details, selectedMonth, confirmModal]);
+
   // CSV 다운로드
   const handleDownloadCSV = useCallback((includeAllMonths = false) => {
     let csvData = [];
 
     if (includeAllMonths) {
-      // 전체 월 데이터
       monthOptions.forEach(month => {
         const data = getMonthlySettlementSummary(month.year, month.month);
         data.details.forEach(item => {
@@ -194,12 +391,13 @@ const SettlementManagement = () => {
             '31일유지고객수': item.eligibleCustomers,
             페이백금액: item.paybackAmount,
             신규가입고객수: item.newCustomers,
-            신규매출: item.newRevenue
+            신규매출: item.newRevenue,
+            정산상태: item.settlementStatus === 'completed' ? '정산완료' : item.status
+            === 'payable' ? '정산대상' : '대기중'
           });
         });
       });
     } else {
-      // 선택된 월 데이터만
       csvData = monthlyData.details.map(item => ({
         정산월: selectedMonth.label,
         이벤트명: item.eventName,
@@ -214,7 +412,9 @@ const SettlementManagement = () => {
         '31일유지고객수': item.eligibleCustomers,
         페이백금액: item.paybackAmount,
         신규가입고객수: item.newCustomers,
-        신규매출: item.newRevenue
+        신규매출: item.newRevenue,
+        정산상태: item.settlementStatus === 'completed' ? '정산완료' : item.status
+        === 'payable' ? '정산대상' : '대기중'
       }));
     }
 
@@ -310,10 +510,20 @@ const SettlementManagement = () => {
           </div>
         </TableCell>
         <TableCell align="center">
-          <SettlementStatusBadge status="payable"/>
+          <SettlementStatusBadge
+              status={item.settlementStatus === 'completed' ? 'completed'
+                  : item.status}
+              showButton={item.settlementStatus !== 'completed' && item.status
+                  === 'payable'}
+              onClick={() => handleIndividualSettlement(item.code)}
+          />
         </TableCell>
       </TableRow>
   );
+
+  const payableItemsCount = monthlyData.details.filter(item =>
+      item.status === 'payable' && item.settlementStatus !== 'completed'
+  ).length;
 
   return (
       <div style={{
@@ -355,6 +565,17 @@ const SettlementManagement = () => {
                 gap: theme.spacing[3],
                 alignItems: 'center'
               }}>
+                {/* 전체 정산 버튼 */}
+                {payableItemsCount > 0 && (
+                    <Button
+                        variant="success"
+                        icon={FiCheckCircle}
+                        onClick={handleBulkSettlement}
+                    >
+                      전체 정산 ({payableItemsCount})
+                    </Button>
+                )}
+
                 {/* 월 선택 드롭다운 */}
                 <Dropdown
                     isOpen={showDropdown}
@@ -525,6 +746,16 @@ const SettlementManagement = () => {
               </CardContent>
           )}
         </Card>
+
+        {/* 확인 모달 */}
+        <ConfirmModal
+            isOpen={confirmModal.isOpen}
+            onClose={() => setConfirmModal({...confirmModal, isOpen: false})}
+            onConfirm={confirmModal.onConfirm}
+            title={confirmModal.title}
+            message={confirmModal.message}
+            type={confirmModal.type}
+        />
       </div>
   );
 };
