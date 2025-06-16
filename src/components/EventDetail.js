@@ -38,7 +38,9 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
     residentNumber: '', // 주민등록번호 추가
     bankName: '',
     accountNumber: '',
-    accountHolder: ''
+    accountHolder: '',
+    // 페이백 가격 추가
+    paybackAmount: 50000 // 기본값 5만원
   });
 
   const eventReferralCodes = referralCodes.filter(
@@ -55,7 +57,7 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
         bankName: newReferral.bankName,
         accountNumber: newReferral.accountNumber,
         accountHolder: newReferral.accountHolder,
-        paybackRate: 50000, // 인당 5만원 고정
+        paybackRate: newReferral.paybackAmount, // 설정된 페이백 금액
         totalPayback: 0 // 초기값 0
       }
     };
@@ -72,7 +74,8 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
       residentNumber: '',
       bankName: '',
       accountNumber: '',
-      accountHolder: ''
+      accountHolder: '',
+      paybackAmount: 50000 // 기본값으로 리셋
     });
   };
 
@@ -117,6 +120,13 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
     }
 
     setNewReferral({...newReferral, residentNumber: value});
+  };
+
+  // 페이백 금액 포맷팅
+  const handlePaybackAmountChange = (e) => {
+    const value = e.target.value.replace(/[^0-9]/g, ''); // 숫자만
+    setNewReferral(
+        {...newReferral, paybackAmount: value ? parseInt(value) : 0});
   };
 
   const CreateReferralModal = () => (
@@ -353,8 +363,62 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
               alignItems: 'center',
               gap: '8px'
             }}>
-              💰 정산 정보 (인당 5만원 페이백)
+              💰 정산 정보
             </h3>
+
+            {/* 페이백 금액 설정 */}
+            <div style={{marginBottom: '16px'}}>
+              <label style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: '600',
+                color: '#0369a1',
+                marginBottom: '6px'
+              }}>
+                인당 페이백 금액 *
+              </label>
+              <div style={{position: 'relative'}}>
+                <input
+                    type="text"
+                    value={newReferral.paybackAmount.toLocaleString()}
+                    onChange={handlePaybackAmountChange}
+                    placeholder="50,000"
+                    style={{
+                      width: '100%',
+                      padding: '10px 40px 10px 12px',
+                      border: '2px solid #bae6fd',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      outline: 'none',
+                      transition: 'border-color 0.3s ease',
+                      boxSizing: 'border-box',
+                      fontFamily: 'monospace',
+                      fontWeight: '600',
+                      color: '#0c4a6e'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0ea5e9'}
+                    onBlur={(e) => e.target.style.borderColor = '#bae6fd'}
+                />
+                <span style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  fontSize: '13px',
+                  color: '#64748b',
+                  fontWeight: '500'
+                }}>
+                  원
+                </span>
+              </div>
+              <div style={{
+                fontSize: '11px',
+                color: '#64748b',
+                marginTop: '4px'
+              }}>
+                * 31일 유지 고객 1명당 지급할 페이백 금액을 설정하세요
+              </div>
+            </div>
 
             <div style={{
               display: 'grid',
@@ -615,7 +679,7 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                 color: '#1e40af',
                 fontWeight: '500'
               }}>
-                💡 페이백 정보
+                💡 페이백 미리보기
               </div>
               <div style={{
                 fontSize: '11px',
@@ -623,9 +687,11 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                 marginTop: '4px',
                 lineHeight: '1.4'
               }}>
-                • 신규 가입자 1명당 5만원 지급<br/>
-                • 매월 말일 일괄 정산<br/>
-                • 세금 신고는 개별적으로 진행
+                • 설정
+                금액: <strong>₩{newReferral.paybackAmount.toLocaleString()}</strong><br/>
+                • 10명 가입 시: <strong>₩{(newReferral.paybackAmount
+                  * 10).toLocaleString()}</strong><br/>
+                • 매월 말일 일괄 정산
               </div>
             </div>
           </div>
@@ -656,7 +722,8 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                     || !newReferral.maxUses ||
                     !newReferral.creatorName || !newReferral.contactPhone ||
                     !newReferral.residentNumber || !newReferral.bankName ||
-                    !newReferral.accountNumber || !newReferral.accountHolder}
+                    !newReferral.accountNumber || !newReferral.accountHolder ||
+                    !newReferral.paybackAmount}
                 style={{
                   flex: 1,
                   padding: '12px 20px',
@@ -664,7 +731,8 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                       && newReferral.maxUses &&
                       newReferral.creatorName && newReferral.contactPhone &&
                       newReferral.residentNumber && newReferral.bankName &&
-                      newReferral.accountNumber && newReferral.accountHolder)
+                      newReferral.accountNumber && newReferral.accountHolder &&
+                      newReferral.paybackAmount)
                       ? '#16a34a' : '#d1d5db',
                   color: 'white',
                   border: 'none',
@@ -675,7 +743,8 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                       && newReferral.maxUses &&
                       newReferral.creatorName && newReferral.contactPhone &&
                       newReferral.residentNumber && newReferral.bankName &&
-                      newReferral.accountNumber && newReferral.accountHolder)
+                      newReferral.accountNumber && newReferral.accountHolder &&
+                      newReferral.paybackAmount)
                       ? 'pointer' : 'not-allowed',
                   transition: 'all 0.3s ease'
                 }}
@@ -1113,6 +1182,8 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                           === 'percentage' ? '%' : '원'}</span>
                           <span>유지율: {referral.retentionRate}%</span>
                           <span>매출: ₩{calculatedRevenue.toLocaleString()}</span>
+                          <span>페이백: ₩{(referral.paybackInfo?.paybackRate
+                              || 50000).toLocaleString()}/명</span>
                         </div>
                       </div>
                       <div style={{
