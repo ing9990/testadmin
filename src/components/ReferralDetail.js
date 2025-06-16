@@ -20,6 +20,7 @@ import {
   getPaybackStatusStyle,
   getReferralStatusStyle
 } from '../data/promotionData';
+import {experts} from '../data/expertsData';
 
 const ReferralDetail = ({referral, onBack}) => {
   const [copiedCode, setCopiedCode] = useState(false);
@@ -27,7 +28,9 @@ const ReferralDetail = ({referral, onBack}) => {
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [editForm, setEditForm] = useState({
     discountRate: referral.discountRate,
-    maxUses: referral.maxUses
+    maxUses: referral.maxUses,
+    paybackAmount: referral.paybackInfo?.paybackRate || 50000,
+    applicableExperts: referral.applicableExperts || []
   });
 
   const event = events.find(e => e.id === referral.eventId);
@@ -57,6 +60,40 @@ const ReferralDetail = ({referral, onBack}) => {
   const confirmEndReferral = () => {
     console.log('레퍼럴 코드 영구 종료');
     setShowEndConfirm(false);
+  };
+
+  // 페이백 금액 포맷팅
+  const handlePaybackAmountChange = (e) => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    setEditForm({...editForm, paybackAmount: value ? parseInt(value) : 0});
+  };
+
+  // 전문가 선택/해제
+  const handleExpertToggle = (expertId) => {
+    setEditForm(prev => ({
+      ...prev,
+      applicableExperts: prev.applicableExperts.includes(expertId)
+          ? prev.applicableExperts.filter(id => id !== expertId)
+          : [...prev.applicableExperts, expertId]
+    }));
+  };
+
+  // 전문가 전체 선택/해제
+  const handleSelectAllExperts = () => {
+    const allExpertIds = experts.map(expert => expert.id);
+    setEditForm(prev => ({
+      ...prev,
+      applicableExperts: prev.applicableExperts.length === allExpertIds.length
+          ? []
+          : allExpertIds
+    }));
+  };
+
+  // 선택된 전문가 이름 목록 가져오기
+  const getSelectedExpertNames = (expertIds) => {
+    return experts
+    .filter(expert => expertIds.includes(expert.id))
+    .map(expert => expert.name);
   };
 
   const ConfirmModal = () => (
@@ -266,7 +303,9 @@ const ReferralDetail = ({referral, onBack}) => {
                   fontWeight: '700',
                   color: '#14532d'
                 }}>
-                ₩{(referral.customers.length * 50000).toLocaleString()}
+                ₩{(referral.customers.length
+                    * (referral.paybackInfo?.paybackRate
+                        || 50000)).toLocaleString()}
               </span>
               </div>
               <div style={{
@@ -275,9 +314,14 @@ const ReferralDetail = ({referral, onBack}) => {
                 lineHeight: '1.4'
               }}>
                 • 신규 가입자: {referral.customers.length}명<br/>
-                • 인당 페이백: ₩50,000<br/>
-                • 계산: {referral.customers.length} × ₩50,000 =
-                ₩{(referral.customers.length * 50000).toLocaleString()}
+                • 인당 페이백: ₩{(referral.paybackInfo?.paybackRate
+                  || 50000).toLocaleString()}<br/>
+                • 계산: {referral.customers.length} ×
+                ₩{(referral.paybackInfo?.paybackRate
+                  || 50000).toLocaleString()} =
+                ₩{(referral.customers.length
+                  * (referral.paybackInfo?.paybackRate
+                      || 50000)).toLocaleString()}
               </div>
             </div>
           </div>
@@ -701,7 +745,8 @@ const ReferralDetail = ({referral, onBack}) => {
             borderRadius: '16px',
             padding: '24px',
             boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-            border: '1px solid #e2e8f0'
+            border: '1px solid #e2e8f0',
+            height: 'fit-content'
           }}>
             <h3 style={{
               fontSize: '18px',
@@ -810,6 +855,202 @@ const ReferralDetail = ({referral, onBack}) => {
               )}
             </div>
 
+            {/* 페이백 금액 */}
+            <div style={{marginBottom: '20px'}}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '600',
+                color: '#374151',
+                marginBottom: '8px'
+              }}>
+                인당 페이백 금액
+              </label>
+              {isEditing ? (
+                  <div style={{position: 'relative'}}>
+                    <input
+                        type="text"
+                        value={editForm.paybackAmount.toLocaleString()}
+                        onChange={handlePaybackAmountChange}
+                        style={{
+                          width: '100%',
+                          padding: '12px 40px 12px 16px',
+                          border: '2px solid #e2e8f0',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          outline: 'none',
+                          transition: 'border-color 0.3s ease',
+                          boxSizing: 'border-box',
+                          fontFamily: 'monospace',
+                          fontWeight: '600'
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = '#4F46E5'}
+                        onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                    />
+                    <span style={{
+                      position: 'absolute',
+                      right: '16px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      fontSize: '14px',
+                      color: '#64748b',
+                      fontWeight: '500'
+                    }}>
+                      원
+                    </span>
+                  </div>
+              ) : (
+                  <div style={{
+                    padding: '12px 16px',
+                    backgroundColor: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    color: '#1f2937',
+                    fontFamily: 'monospace',
+                    fontWeight: '600'
+                  }}>
+                    ₩{(referral.paybackInfo?.paybackRate
+                      || 50000).toLocaleString()}
+                  </div>
+              )}
+            </div>
+
+            {/* 적용 가능 전문가 */}
+            <div style={{marginBottom: '20px'}}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '600',
+                color: '#374151',
+                marginBottom: '8px'
+              }}>
+                적용 가능 전문가
+              </label>
+              {isEditing ? (
+                  <div style={{
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    backgroundColor: '#f8fafc'
+                  }}>
+                    {/* 전체 선택 체크박스 */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginBottom: '8px',
+                      paddingBottom: '8px',
+                      borderBottom: '1px solid #e2e8f0'
+                    }}>
+                      <label style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: '#374151'
+                      }}>
+                        <input
+                            type="checkbox"
+                            checked={editForm.applicableExperts.length
+                                === experts.length}
+                            onChange={handleSelectAllExperts}
+                            style={{
+                              width: '14px',
+                              height: '14px',
+                              cursor: 'pointer'
+                            }}
+                        />
+                        전체 선택
+                        ({editForm.applicableExperts.length}/{experts.length})
+                      </label>
+                    </div>
+
+                    {/* 전문가 목록 */}
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '6px'
+                    }}>
+                      {experts.map(expert => (
+                          <label key={expert.id} style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            cursor: 'pointer',
+                            padding: '6px 8px',
+                            borderRadius: '6px',
+                            backgroundColor: editForm.applicableExperts.includes(
+                                expert.id)
+                                ? '#f0fdf4' : 'white',
+                            border: `1px solid ${editForm.applicableExperts.includes(
+                                expert.id)
+                                ? '#bbf7d0' : '#e2e8f0'}`,
+                            transition: 'all 0.3s ease'
+                          }}>
+                            <input
+                                type="checkbox"
+                                checked={editForm.applicableExperts.includes(
+                                    expert.id)}
+                                onChange={() => handleExpertToggle(expert.id)}
+                                style={{
+                                  width: '14px',
+                                  height: '14px',
+                                  cursor: 'pointer'
+                                }}
+                            />
+                            <span style={{
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              color: editForm.applicableExperts.includes(
+                                  expert.id)
+                                  ? '#16a34a' : '#374151'
+                            }}>
+                              {expert.name}
+                            </span>
+                          </label>
+                      ))}
+                    </div>
+                  </div>
+              ) : (
+                  <div style={{
+                    padding: '12px 16px',
+                    backgroundColor: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    color: '#1f2937'
+                  }}>
+                    {getSelectedExpertNames(
+                        referral.applicableExperts || []).length > 0 ? (
+                        <div style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '4px'
+                        }}>
+                          {getSelectedExpertNames(
+                              referral.applicableExperts || []).map(name => (
+                              <span key={name} style={{
+                                padding: '2px 6px',
+                                backgroundColor: '#f0f9ff',
+                                color: '#0ea5e9',
+                                borderRadius: '8px',
+                                fontSize: '11px',
+                                fontWeight: '500'
+                              }}>
+                                {name}
+                              </span>
+                          ))}
+                        </div>
+                    ) : (
+                        <span style={{color: '#64748b'}}>모든 전문가</span>
+                    )}
+                  </div>
+              )}
+            </div>
+
             <div style={{marginBottom: '20px'}}>
               <label style={{
                 display: 'block',
@@ -910,7 +1151,8 @@ const ReferralDetail = ({referral, onBack}) => {
             borderRadius: '16px',
             padding: '24px',
             boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-            border: '1px solid #e2e8f0'
+            border: '1px solid #e2e8f0',
+            height: 'fit-content'
           }}>
             <h3 style={{
               fontSize: '18px',

@@ -21,6 +21,7 @@ import {
   getReferralStatusStyle,
   referralCodes
 } from '../data/promotionData';
+import {experts} from '../data/expertsData';
 
 const EventDetail = ({event, onBack, onReferralSelect}) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -35,12 +36,14 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
     creatorName: '',
     contactPhone: '',
     contactEmail: '',
-    residentNumber: '', // 주민등록번호 추가
+    residentNumber: '',
     bankName: '',
     accountNumber: '',
     accountHolder: '',
-    // 페이백 가격 추가
-    paybackAmount: 50000 // 기본값 5만원
+    // 페이백 가격
+    paybackAmount: 50000,
+    // 적용 가능 전문가 목록
+    applicableExperts: [] // 전문가 ID 배열
   });
 
   const eventReferralCodes = referralCodes.filter(
@@ -53,13 +56,14 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
         creatorName: newReferral.creatorName,
         contactPhone: newReferral.contactPhone,
         contactEmail: newReferral.contactEmail,
-        residentNumber: newReferral.residentNumber, // 주민등록번호 추가
+        residentNumber: newReferral.residentNumber,
         bankName: newReferral.bankName,
         accountNumber: newReferral.accountNumber,
         accountHolder: newReferral.accountHolder,
-        paybackRate: newReferral.paybackAmount, // 설정된 페이백 금액
-        totalPayback: 0 // 초기값 0
-      }
+        paybackRate: newReferral.paybackAmount,
+        totalPayback: 0
+      },
+      applicableExperts: newReferral.applicableExperts
     };
     console.log('새 레퍼럴 코드 생성:', referralWithPayback);
     setShowCreateModal(false);
@@ -75,7 +79,8 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
       bankName: '',
       accountNumber: '',
       accountHolder: '',
-      paybackAmount: 50000 // 기본값으로 리셋
+      paybackAmount: 50000,
+      applicableExperts: []
     });
   };
 
@@ -109,7 +114,7 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
 
   // 주민등록번호 형식 자동 변환
   const handleResidentNumberChange = (e) => {
-    let value = e.target.value.replace(/[^0-9]/g, ''); // 숫자만 추출
+    let value = e.target.value.replace(/[^0-9]/g, '');
 
     if (value.length > 13) {
       value = value.slice(0, 13);
@@ -124,9 +129,37 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
 
   // 페이백 금액 포맷팅
   const handlePaybackAmountChange = (e) => {
-    const value = e.target.value.replace(/[^0-9]/g, ''); // 숫자만
+    const value = e.target.value.replace(/[^0-9]/g, '');
     setNewReferral(
         {...newReferral, paybackAmount: value ? parseInt(value) : 0});
+  };
+
+  // 전문가 선택/해제
+  const handleExpertToggle = (expertId) => {
+    setNewReferral(prev => ({
+      ...prev,
+      applicableExperts: prev.applicableExperts.includes(expertId)
+          ? prev.applicableExperts.filter(id => id !== expertId)
+          : [...prev.applicableExperts, expertId]
+    }));
+  };
+
+  // 전문가 전체 선택/해제
+  const handleSelectAllExperts = () => {
+    const allExpertIds = experts.map(expert => expert.id);
+    setNewReferral(prev => ({
+      ...prev,
+      applicableExperts: prev.applicableExperts.length === allExpertIds.length
+          ? []
+          : allExpertIds
+    }));
+  };
+
+  // 선택된 전문가 이름 목록 가져오기
+  const getSelectedExpertNames = (expertIds) => {
+    return experts
+    .filter(expert => expertIds.includes(expert.id))
+    .map(expert => expert.name);
   };
 
   const CreateReferralModal = () => (
@@ -236,13 +269,6 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                 자동생성
               </button>
             </div>
-            <div style={{
-              fontSize: '12px',
-              color: '#64748b',
-              marginTop: '6px'
-            }}>
-              💡 자동생성 버튼을 클릭하면 이벤트명과 할인율을 기반으로 코드가 생성됩니다
-            </div>
           </div>
 
           <div style={{
@@ -315,7 +341,7 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
             </div>
           </div>
 
-          <div style={{marginBottom: '32px'}}>
+          <div style={{marginBottom: '20px'}}>
             <label style={{
               display: 'block',
               fontSize: '14px',
@@ -344,6 +370,140 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                 onFocus={(e) => e.target.style.borderColor = '#16a34a'}
                 onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
             />
+          </div>
+
+          {/* 적용 가능 전문가 선택 */}
+          <div style={{marginBottom: '20px'}}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#374151',
+              marginBottom: '8px'
+            }}>
+              적용 가능 전문가
+            </label>
+
+            <div style={{
+              border: '2px solid #e2e8f0',
+              borderRadius: '12px',
+              padding: '16px',
+              backgroundColor: '#f8fafc'
+            }}>
+              {/* 전체 선택 체크박스 */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '12px',
+                paddingBottom: '12px',
+                borderBottom: '1px solid #e2e8f0'
+              }}>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#374151'
+                }}>
+                  <input
+                      type="checkbox"
+                      checked={newReferral.applicableExperts.length
+                          === experts.length}
+                      onChange={handleSelectAllExperts}
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        cursor: 'pointer'
+                      }}
+                  />
+                  전체 선택 ({newReferral.applicableExperts.length}/{experts.length})
+                </label>
+              </div>
+
+              {/* 전문가 목록 */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '8px'
+              }}>
+                {experts.map(expert => (
+                    <label key={expert.id} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: newReferral.applicableExperts.includes(
+                          expert.id)
+                          ? '#f0fdf4' : 'white',
+                      border: `1px solid ${newReferral.applicableExperts.includes(
+                          expert.id)
+                          ? '#bbf7d0' : '#e2e8f0'}`,
+                      transition: 'all 0.3s ease'
+                    }}>
+                      <input
+                          type="checkbox"
+                          checked={newReferral.applicableExperts.includes(
+                              expert.id)}
+                          onChange={() => handleExpertToggle(expert.id)}
+                          style={{
+                            width: '16px',
+                            height: '16px',
+                            cursor: 'pointer'
+                          }}
+                      />
+                      <span style={{
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        color: newReferral.applicableExperts.includes(expert.id)
+                            ? '#16a34a' : '#374151'
+                      }}>
+                        {expert.name}
+                      </span>
+                    </label>
+                ))}
+              </div>
+
+              {/* 선택된 전문가 표시 */}
+              {newReferral.applicableExperts.length > 0 && (
+                  <div style={{
+                    marginTop: '12px',
+                    paddingTop: '12px',
+                    borderTop: '1px solid #e2e8f0'
+                  }}>
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#64748b',
+                      marginBottom: '6px'
+                    }}>
+                      선택된 전문가:
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '6px'
+                    }}>
+                      {getSelectedExpertNames(
+                          newReferral.applicableExperts).map(name => (
+                          <span key={name} style={{
+                            padding: '4px 8px',
+                            backgroundColor: '#dcfce7',
+                            color: '#16a34a',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            fontWeight: '500'
+                          }}>
+                            {name}
+                          </span>
+                      ))}
+                    </div>
+                  </div>
+              )}
+            </div>
           </div>
 
           {/* 정산 정보 섹션 */}
@@ -410,13 +570,6 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                 }}>
                   원
                 </span>
-              </div>
-              <div style={{
-                fontSize: '11px',
-                color: '#64748b',
-                marginTop: '4px'
-              }}>
-                * 31일 유지 고객 1명당 지급할 페이백 금액을 설정하세요
               </div>
             </div>
 
@@ -549,13 +702,6 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                   onFocus={(e) => e.target.style.borderColor = '#0ea5e9'}
                   onBlur={(e) => e.target.style.borderColor = '#bae6fd'}
               />
-              <div style={{
-                fontSize: '11px',
-                color: '#64748b',
-                marginTop: '4px'
-              }}>
-                * 세금 신고를 위해 필요한 정보입니다
-              </div>
             </div>
 
             <div style={{
@@ -691,7 +837,8 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                 금액: <strong>₩{newReferral.paybackAmount.toLocaleString()}</strong><br/>
                 • 10명 가입 시: <strong>₩{(newReferral.paybackAmount
                   * 10).toLocaleString()}</strong><br/>
-                • 매월 말일 일괄 정산
+                • 적용
+                전문가: <strong>{newReferral.applicableExperts.length}명</strong>
               </div>
             </div>
           </div>
@@ -723,7 +870,8 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                     !newReferral.creatorName || !newReferral.contactPhone ||
                     !newReferral.residentNumber || !newReferral.bankName ||
                     !newReferral.accountNumber || !newReferral.accountHolder ||
-                    !newReferral.paybackAmount}
+                    !newReferral.paybackAmount
+                    || newReferral.applicableExperts.length === 0}
                 style={{
                   flex: 1,
                   padding: '12px 20px',
@@ -732,7 +880,8 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                       newReferral.creatorName && newReferral.contactPhone &&
                       newReferral.residentNumber && newReferral.bankName &&
                       newReferral.accountNumber && newReferral.accountHolder &&
-                      newReferral.paybackAmount)
+                      newReferral.paybackAmount
+                      && newReferral.applicableExperts.length > 0)
                       ? '#16a34a' : '#d1d5db',
                   color: 'white',
                   border: 'none',
@@ -744,7 +893,8 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                       newReferral.creatorName && newReferral.contactPhone &&
                       newReferral.residentNumber && newReferral.bankName &&
                       newReferral.accountNumber && newReferral.accountHolder &&
-                      newReferral.paybackAmount)
+                      newReferral.paybackAmount
+                      && newReferral.applicableExperts.length > 0)
                       ? 'pointer' : 'not-allowed',
                   transition: 'all 0.3s ease'
                 }}
@@ -1096,6 +1246,8 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                   * 100;
               const calculatedRevenue = calculateReferralRevenue(
                   referral.discountRate, referral.currentUses);
+              const applicableExpertNames = getSelectedExpertNames(
+                  referral.applicableExperts || []);
 
               return (
                   <div
@@ -1176,7 +1328,8 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                           display: 'flex',
                           gap: '24px',
                           fontSize: '14px',
-                          color: '#64748b'
+                          color: '#64748b',
+                          marginBottom: '8px'
                         }}>
                           <span>할인율: {referral.discountRate}{referral.discountType
                           === 'percentage' ? '%' : '원'}</span>
@@ -1185,6 +1338,36 @@ const EventDetail = ({event, onBack, onReferralSelect}) => {
                           <span>페이백: ₩{(referral.paybackInfo?.paybackRate
                               || 50000).toLocaleString()}/명</span>
                         </div>
+                        {/* 적용 가능 전문가 표시 */}
+                        {applicableExpertNames.length > 0 && (
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              fontSize: '12px',
+                              color: '#64748b'
+                            }}>
+                              <span>적용 전문가:</span>
+                              <div style={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '4px'
+                              }}>
+                                {applicableExpertNames.map(name => (
+                                    <span key={name} style={{
+                                      padding: '2px 6px',
+                                      backgroundColor: '#f0f9ff',
+                                      color: '#0ea5e9',
+                                      borderRadius: '8px',
+                                      fontSize: '11px',
+                                      fontWeight: '500'
+                                    }}>
+                                      {name}
+                                    </span>
+                                ))}
+                              </div>
+                            </div>
+                        )}
                       </div>
                       <div style={{
                         display: 'flex',
