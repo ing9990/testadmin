@@ -1051,58 +1051,6 @@ const ReferralDetail = ({referral, onBack}) => {
               )}
             </div>
 
-            <div style={{marginBottom: '20px'}}>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#374151',
-                marginBottom: '8px'
-              }}>
-                생성일
-              </label>
-              <div style={{
-                padding: '12px 16px',
-                backgroundColor: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                fontSize: '14px',
-                color: '#64748b',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <FiCalendar size={14}/>
-                {referral.createdAt}
-              </div>
-            </div>
-
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#374151',
-                marginBottom: '8px'
-              }}>
-                종료일
-              </label>
-              <div style={{
-                padding: '12px 16px',
-                backgroundColor: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                fontSize: '14px',
-                color: '#64748b',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <FiCalendar size={14}/>
-                {referral.endDate}
-              </div>
-            </div>
-
             {isEditing && (
                 <div style={{
                   display: 'flex',
